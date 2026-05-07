@@ -78,7 +78,7 @@ def analyze(req: AnalyzeRequest):
     n8n 흐름:
         텍스트 추출 → POST /analyze → Discord 포맷팅
     """
-    if not req.text or len(req.text.strip()) < 10:
+    if not req.text or len(req.text.strip()) < 5:
         raise HTTPException(status_code=400, detail="텍스트가 너무 짧습니다.")
 
     occurred_at = None
