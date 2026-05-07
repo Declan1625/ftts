@@ -1,0 +1,71 @@
+{
+  "name": "FTTS 888 Pipeline",
+  "active": true,
+  "nodes": [
+    {
+      "id": "1",
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [50, 50],
+      "parameters": {}
+    },
+    {
+      "id": "2",
+      "name": "Call FTTS /analyze",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [250, 50],
+      "parameters": {
+        "url": "http://localhost:8000/analyze",
+        "method": "POST",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "{{ $json.text }}"
+            },
+            {
+              "name": "source_name",
+              "value": "{{ $json.source_name }}"
+            },
+            {
+              "name": "title",
+              "value": "={{ $json.title || '' }}"
+            },
+            {
+              "name": "url",
+              "value": "={{ $json.url || '' }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json"
+      }
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Call FTTS /analyze",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

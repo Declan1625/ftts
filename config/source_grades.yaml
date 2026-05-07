@@ -1,0 +1,54 @@
+# 정보원 초기 등급 설정
+# 새 정보원 추가 시 이 파일에 먼저 등록 → DB seed 시 반영됨
+# grade: S/A/B/C/D  |  type: blog/news/report/sns/official
+
+sources:
+  - name: "메르 블로그"
+    url: "https://blog.naver.com/ranto28"
+    type: blog
+    grade: S
+
+  - name: "한국경제신문"
+    url: "https://www.hankyung.com"
+    type: news
+    grade: B
+
+  - name: "매일경제"
+    url: "https://www.mk.co.kr"
+    type: news
+    grade: B
+
+  - name: "연합뉴스 경제"
+    url: "https://www.yna.co.kr/economy"
+    type: news
+    grade: B
+
+  - name: "금융감독원 전자공시(DART)"
+    url: "https://dart.fss.or.kr"
+    type: official
+    grade: A
+
+  - name: "한국은행 경제통계"
+    url: "https://ecos.bok.or.kr"
+    type: official
+    grade: A
+
+  - name: "네이버 금융 뉴스"
+    url: "https://finance.naver.com/news"
+    type: news
+    grade: C
+
+# 등급 기준 (참고용)
+grade_thresholds:
+  S: 0.90
+  A: 0.75
+  B: 0.60
+  C: 0.45
+  D: 0.00   # accuracy < 0.45
+
+grade_weights:
+  S: 1.0
+  A: 0.8
+  B: 0.6
+  C: 0.4
+  D: 0.2
