@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class AccuracyReport:
-    """정확도 리포트 스냅샷."""
+    """정확도 리포트 스냅샷 (메르식+버핏식)."""
 
     total_evaluated: int
     correct: int
@@ -43,47 +43,61 @@ class AccuracyReport:
     period_days: Optional[int] = None
     generated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
+    # 메르식(사건분석) vs 버핏식(투자신호) 분리
+    mercer_accuracy: Optional[float] = None
+    buffett_accuracy: Optional[float] = None
+    mercer_count: Optional[int] = None
+    buffett_count: Optional[int] = None
+
     def summary_lines(self) -> list[str]:
         lines = [
-            "=" * 50,
-            f"정확도 리포트  ({self.generated_at.strftime('%Y-%m-%d %H:%M')} UTC)",
+            "=" * 60,
+            f"📊 정확도 리포트  ({self.generated_at.strftime('%Y-%m-%d %H:%M')} UTC)",
         ]
         if self.period_days:
-            lines.append(f"기간: 최근 {self.period_days}일")
+            lines.append(f"   기간: 최근 {self.period_days}일")
         lines += [
-            "-" * 50,
-            f"평가 건수  : {self.total_evaluated}",
-            f"정답 건수  : {self.correct}",
-            f"정확도     : {self.accuracy:.1%}",
-            f"실전 전환  : {'✅ 가능' if self.live_gate_passed else '❌ 불가 (80% 미달)'}",
-            "-" * 50,
+            "-" * 60,
+            f"전체 평가: {self.total_evaluated}건 | 정답: {self.correct}건 | {self.accuracy:.1%}",
+            f"실전 전환: {'✅ 가능 (80% 이상)' if self.live_gate_passed else '❌ 불가 (80% 미달)'}",
         ]
 
+        # 메르식 vs 버핏식
+        if self.mercer_accuracy is not None:
+            lines.append("-" * 60)
+            lines.append("[메르식 (사건분석)]")
+            lines.append(f"  {self.mercer_count or 0}건 | {self.mercer_accuracy:.1%}")
+        if self.buffett_accuracy is not None:
+            lines.append("[버핏식 (투자신호)]")
+            lines.append(f"  {self.buffett_count or 0}건 | {self.buffett_accuracy:.1%}")
+
         if self.by_signal:
+            lines.append("-" * 60)
             lines.append("[신호별]")
-            for sig, d in self.by_signal.items():
-                lines.append(f"  {sig:4s}  {d['correct']}/{d['total']}  ({d['accuracy']:.1%})")
+            for sig, d in sorted(self.by_signal.items()):
+                lines.append(f"  {sig:4s}  {d['correct']}/{d['total']:3d}  ({d['accuracy']:.1%})")
 
         if self.by_company:
+            lines.append("-" * 60)
             lines.append("[기업별 Top 5]")
             top5 = sorted(self.by_company.items(), key=lambda x: -x[1]["total"])[:5]
             for name, d in top5:
-                lines.append(f"  {name[:20]:20s}  {d['correct']}/{d['total']}  ({d['accuracy']:.1%})")
+                lines.append(f"  {name[:20]:20s}  {d['correct']}/{d['total']:3d}  ({d['accuracy']:.1%})")
 
-        lines.append("=" * 50)
+        lines.append("=" * 60)
         return lines
 
 
 class AccuracyTracker:
-    """decisions / outcomes 테이블을 분석해 정확도를 계산한다."""
+    """decisions / outcomes 테이블을 분석해 정확도를 계산한다 (메르식+버핏식)."""
 
     def __init__(self, session: Session) -> None:
         self._s = session
 
-    # ── 전체 리포트 ───────────────────────────────────────────────
+    # ── 전체 리포트 (메르식+버핏식 분리) ───────────────────────────
 
     def report(self, *, days: Optional[int] = None) -> AccuracyReport:
-        """전체(또는 최근 N일) 정확도 리포트를 반환한다."""
+        """전체(또는 최근 N일) 정확도 리포트 (메르식+버핏식 분리)."""
         since = self._since(days)
 
         outcomes = self._fetch_outcomes(since)
@@ -100,6 +114,10 @@ class AccuracyTracker:
         correct = sum(1 for o in outcomes if o.is_correct)
         accuracy = correct / total
 
+        # 메르식(사건분석) vs 버핏식(투자신호) 분리
+        mercer_acc, mercer_cnt = self._mercer_accuracy(outcomes)
+        buffett_acc, buffett_cnt = self._buffett_accuracy(outcomes)
+
         return AccuracyReport(
             total_evaluated=total,
             correct=correct,
@@ -108,6 +126,10 @@ class AccuracyTracker:
             by_signal=self._by_signal(outcomes),
             by_company=self._by_company(outcomes),
             period_days=days,
+            mercer_accuracy=mercer_acc,
+            mercer_count=mercer_cnt,
+            buffett_accuracy=buffett_acc,
+            buffett_count=buffett_cnt,
         )
 
     # ── 실전 전환 게이트 ──────────────────────────────────────────
@@ -151,6 +173,33 @@ class AccuracyTracker:
 
         self._s.flush()
         return changed
+
+    # ── 메르식 vs 버핏식 ──────────────────────────────────────────
+
+    def _mercer_accuracy(self, outcomes: list[Outcome]) -> tuple[Optional[float], Optional[int]]:
+        """메르식 정확도: 사건 감지 + 인과관계 분석.
+
+        confidence가 높을수록 "사건 감지가 명확했다"는 의미.
+        confidence >= 0.6이면 메르식 고신뢰도.
+        """
+        mercer_outcomes = [o for o in outcomes if o.decision and o.decision.confidence >= 0.6]
+        if not mercer_outcomes:
+            return None, None
+        correct = sum(1 for o in mercer_outcomes if o.is_correct)
+        return correct / len(mercer_outcomes), len(mercer_outcomes)
+
+    def _buffett_accuracy(self, outcomes: list[Outcome]) -> tuple[Optional[float], Optional[int]]:
+        """버핏식 정확도: 투자 신호 + 수익률 달성도.
+
+        actual_weight가 predicted_weight에 가까우면 "투자 신호가 정확했다".
+        단순히 is_correct만 봐서는 부족, weight 편차도 함께 보면 좋음.
+        현재는 is_correct만 사용하되, 나중에 weight_delta 추가 가능.
+        """
+        buffett_outcomes = [o for o in outcomes if o.decision and o.decision.confidence < 0.6]
+        if not buffett_outcomes:
+            return None, None
+        correct = sum(1 for o in buffett_outcomes if o.is_correct)
+        return correct / len(buffett_outcomes), len(buffett_outcomes)
 
     # ── 내부 ─────────────────────────────────────────────────────
 

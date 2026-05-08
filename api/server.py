@@ -150,19 +150,21 @@ def analyze(req: AnalyzeRequest):
 def _collect_signals(session, engine: WeightEngine, graph: CausalGraph) -> list[SignalResult]:
     """그래프 내 모든 company 노드에 대해 신호를 산출."""
     from database.models import Company
+    from core.weight_engine import EventInput
 
     signals = []
     companies = session.query(Company).filter(Company.is_active == True).all()
 
     for company in companies:
         try:
-            decision = engine.decide(company_id=company.id)
+            company_node = ("company", company.id)
+            decision = engine.decide(company_node, [])
             if decision.signal in ("BUY", "SELL"):
                 signals.append(SignalResult(
                     ticker=company.ticker or "",
                     company_name=company.name,
                     signal=decision.signal,
-                    score=round(decision.score, 3),
+                    score=round(decision.event_score, 3),
                     confidence=round(decision.confidence, 3),
                 ))
         except Exception:

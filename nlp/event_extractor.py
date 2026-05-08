@@ -11,7 +11,7 @@ from anthropic import Anthropic
 logger = logging.getLogger(__name__)
 
 _MAX_RETRIES = 3
-_MODEL = "claude-opus-4-1-20250805"
+_MODEL = "claude-sonnet-4-5"
 
 _SYSTEM_PROMPT = """\
 당신은 금융·경제 뉴스 분석 전문가입니다.

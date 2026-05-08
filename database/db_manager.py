@@ -21,13 +21,15 @@ from database.models import Base
 
 logger = logging.getLogger(__name__)
 
-_engine = create_engine(
-    DATABASE_URL,
-    pool_pre_ping=True,       # 끊긴 연결 자동 복구
-    pool_size=5,
-    max_overflow=10,
-    echo=False,
-)
+_engine_kwargs = {"echo": False}
+if not DATABASE_URL.startswith("sqlite"):
+    _engine_kwargs.update({
+        "pool_pre_ping": True,
+        "pool_size": 5,
+        "max_overflow": 10,
+    })
+
+_engine = create_engine(DATABASE_URL, **_engine_kwargs)
 
 _SessionFactory = sessionmaker(bind=_engine, expire_on_commit=False)
 

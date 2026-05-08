@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-_MODEL = "claude-opus-4-1-20250805"
+_MODEL = "claude-sonnet-4-5"
 
 
 class EventProcessor:

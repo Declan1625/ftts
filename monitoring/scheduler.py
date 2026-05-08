@@ -1,14 +1,16 @@
-"""monitoring/scheduler.py — APScheduler 자동화 파이프라인 (15-30분 간격)"""
+"""monitoring/scheduler.py — APScheduler 자동화 파이프라인 (15-30분 간격 + 일일 평가)"""
 
 import logging
 from datetime import datetime, timezone
 
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
 from core.event_processor import EventProcessor
 from data_collection.source_manager import SourceManager
 from database.db_manager import get_session
+from monitoring.outcome_evaluator import OutcomeEvaluator
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +33,7 @@ class FTTSScheduler:
             logger.warning("스케줄러가 이미 실행 중입니다")
             return
 
-        # 주기적 작업 등록
+        # 주기적 작업 등록 (메인 파이프라인: 20분 간격)
         self.scheduler.add_job(
             self._run_pipeline,
             trigger=IntervalTrigger(minutes=self.interval),
@@ -40,10 +42,19 @@ class FTTSScheduler:
             replace_existing=True,
         )
 
+        # 일일 outcome 평가 (매일 오전 9시)
+        self.scheduler.add_job(
+            self._evaluate_outcomes,
+            trigger=CronTrigger(hour=9, minute=0),
+            id="ftts_outcome_evaluation",
+            name="Outcome 자동 평가",
+            replace_existing=True,
+        )
+
         self.scheduler.start()
         self.is_running = True
         logger.info(
-            "스케줄러 시작 — %d분 간격으로 자동 실행",
+            "스케줄러 시작 — %d분 간격 메인 파이프라인 + 매일 9시 Outcome 평가",
             self.interval,
         )
 
@@ -110,6 +121,23 @@ class FTTSScheduler:
 
         except Exception as exc:
             logger.error("파이프라인 실행 중 오류: %s", exc, exc_info=True)
+
+    def _evaluate_outcomes(self) -> None:
+        """미평가 Outcome 자동 평가."""
+        try:
+            logger.info("=" * 60)
+            logger.info("Outcome 평가 시작 — %s", datetime.now(timezone.utc).isoformat())
+            logger.info("=" * 60)
+
+            with get_session() as session:
+                evaluator = OutcomeEvaluator(session, eval_days=5)
+                n_processed = evaluator.evaluate_pending()
+
+            logger.info("Outcome 평가 완료: %d건 처리", n_processed)
+            logger.info("=" * 60)
+
+        except Exception as exc:
+            logger.error("Outcome 평가 중 오류: %s", exc, exc_info=True)
 
 
 # ── 전역 스케줄러 인스턴스 ───────────────────────────────
