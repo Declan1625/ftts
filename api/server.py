@@ -14,6 +14,7 @@ from database.db_manager import get_session
 from core.event_processor import EventProcessor
 from core.weight_engine import WeightEngine
 from core.causal_graph import CausalGraph
+from monitoring.alert_manager import get_alert_manager
 
 logger = logging.getLogger(__name__)
 
@@ -132,6 +133,19 @@ def analyze(req: AnalyzeRequest):
         signals=signals,
         event_count=result["event_count"] if "event_count" in result else len(result.get("events", [])),
     )
+
+    # 텔레그램 알림 (BUY/SELL 신호만)
+    alert_mgr = get_alert_manager()
+    for sig in signals:
+        if sig.signal in ("BUY", "SELL"):
+            alert_mgr.send_signal_alert(
+                ticker=sig.ticker,
+                company_name=sig.company_name,
+                signal=sig.signal,
+                score=sig.score,
+                confidence=sig.confidence,
+                source_name=req.source_name,
+            )
 
     return AnalyzeResponse(
         status="ok",

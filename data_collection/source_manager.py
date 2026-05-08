@@ -94,23 +94,22 @@ class SourceManager:
     def _collect_blog(self) -> int:
         """메르 블로그 포스팅 수집."""
         try:
-            posts = blog_scraper.fetch_recent_posts(days_back=7)
+            posts = blog_scraper.fetch_recent_posts(count=10)
             source_id = self._get_source_id("메르 블로그")
             count = 0
             for post in posts:
                 event = Event(
                     source_id=source_id,
-                    title=post.get("title", ""),
-                    content=post.get("content", "")[:2000],
+                    title=post.title,
+                    content=post.content[:2000],
                     event_type="macro",
-                    occurred_at=datetime.now(),
+                    occurred_at=post.published_at,
                     collected_at=datetime.now(),
                 )
                 self.session.add(event)
                 count += 1
 
             self.session.commit()
-            # Source 통계 업데이트
             self._update_source_stats(source_id, count)
             return count
         except Exception as exc:

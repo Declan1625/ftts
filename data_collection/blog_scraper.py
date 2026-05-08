@@ -72,8 +72,25 @@ def fetch_posts_since(since: datetime, max_posts: int = 100) -> list[BlogPost]:
     return posts
 
 
+def fetch_all_posts(max_pages: int = 50) -> list[BlogPost]:
+    """전체 포스트 수집 (페이지네이션)."""
+    post_nos = _get_all_post_nos(max_pages)
+    posts: list[BlogPost] = []
+    for i, no in enumerate(post_nos, 1):
+        try:
+            post = _fetch_post(no)
+            if post:
+                posts.append(post)
+            if i % 10 == 0:
+                logger.info("수집 진행: %d/%d", i, len(post_nos))
+            time.sleep(_REQUEST_INTERVAL)
+        except Exception as exc:
+            logger.error("포스트 수집 실패 no=%s: %s", no, exc)
+    return posts
+
+
 def _get_post_list(count: int) -> list[str]:
-    """포스트 번호 목록 반환."""
+    """포스트 번호 목록 반환 (단일 페이지)."""
     params = {
         "blogId": _BLOG_ID,
         "currentPage": 1,
@@ -93,6 +110,43 @@ def _get_post_list(count: int) -> list[str]:
                 break
 
     return list(dict.fromkeys(post_nos))[:count]
+
+
+def _get_all_post_nos(max_pages: int = 50) -> list[str]:
+    """모든 포스트 번호 수집 (페이지네이션)."""
+    all_nos: list[str] = []
+    for page in range(1, max_pages + 1):
+        params = {
+            "blogId": _BLOG_ID,
+            "currentPage": page,
+            "viewdate": "",
+            "categoryNo": "",
+            "countPerPage": 30,
+        }
+        try:
+            resp = _get_with_retry(_POST_LIST_URL, params=params)
+            soup = BeautifulSoup(resp.text, "html.parser")
+
+            page_nos: list[str] = []
+            for a in soup.select("a[href*='logNo=']"):
+                href = a.get("href", "")
+                for part in href.split("&"):
+                    if part.startswith("logNo="):
+                        page_nos.append(part.split("=")[1])
+                        break
+
+            if not page_nos:
+                logger.info("페이지 %d: 글 없음 (수집 종료)", page)
+                break
+
+            all_nos.extend(page_nos)
+            logger.info("페이지 %d: %d개 글 수집 (누계: %d)", page, len(page_nos), len(all_nos))
+            time.sleep(_REQUEST_INTERVAL)
+        except Exception as exc:
+            logger.error("페이지 %d 수집 실패: %s", page, exc)
+            break
+
+    return list(dict.fromkeys(all_nos))
 
 
 def _fetch_post(post_no: str) -> BlogPost | None:
