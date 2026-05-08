@@ -14,7 +14,6 @@ from database.db_manager import get_session
 from core.event_processor import EventProcessor
 from core.weight_engine import WeightEngine
 from core.causal_graph import CausalGraph
-from core.gemini_searcher import GeminiSearcher
 
 logger = logging.getLogger(__name__)
 
@@ -92,15 +91,6 @@ def analyze(req: AnalyzeRequest):
         except ValueError:
             occurred_at = None
 
-    # 1단계: Gemini 검색 (선택사항 - 실패해도 진행)
-    gemini_analysis = None
-    try:
-        searcher = GeminiSearcher()
-        gemini_analysis = searcher.search_and_analyze(req.text)
-        logger.info(f"Gemini 분석 완료: {gemini_analysis}")
-    except Exception as e:
-        logger.warning(f"Gemini 검색 실패 (계속 진행): {e}")
-
     with get_session() as session:
         processor = EventProcessor(session)
 
@@ -119,14 +109,9 @@ def analyze(req: AnalyzeRequest):
                 session.flush()
             req.source_id = source.id
 
-        # 2단계: Claude 분석 (Gemini 결과 포함)
-        enriched_text = req.text
-        if gemini_analysis:
-            analysis_info = gemini_analysis.get("analysis", {})
-            enriched_text += f"\n\n[Gemini 분석]\n영향도: {analysis_info.get('impact_score', 0)}\n산업: {', '.join(analysis_info.get('affected_industries', []))}\n기업: {', '.join(analysis_info.get('affected_companies', []))}"
-
+        # Claude 분석
         result = processor.process_event(
-            raw_text=enriched_text,
+            raw_text=req.text,
             source_name=req.source_name,
             source_id=req.source_id,
             occurred_at=occurred_at,
