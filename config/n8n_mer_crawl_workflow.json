@@ -1,0 +1,246 @@
+{
+  "name": "메르 블로그 전체 크롤링 + 메르식 분석",
+  "description": "메르 블로그(ranto28) 전체 글을 수집하여 메르식 투자법(사건→정보원→인과관계) 분석",
+  "active": true,
+  "nodes": [
+    {
+      "id": "1",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [50, 50],
+      "parameters": {}
+    },
+    {
+      "id": "2",
+      "name": "Set Max Pages",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [250, 50],
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "name": "max_pages",
+              "value": "50",
+              "type": "number"
+            },
+            {
+              "name": "current_page",
+              "value": "1",
+              "type": "number"
+            },
+            {
+              "name": "results",
+              "value": "[]",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "3",
+      "name": "Loop Pages (1-50)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [450, 50],
+      "parameters": {
+        "functionCode": "const max = $input.first().json.max_pages || 50;\nconst pages = [];\nfor (let i = 1; i <= max; i++) {\n  pages.push({ page: i });\n}\nreturn pages.map(p => ({ json: p }));"
+      }
+    },
+    {
+      "id": "4",
+      "name": "Fetch Post List",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [650, 50],
+      "parameters": {
+        "url": "={{ $env.FTTS_API_URL || 'http://localhost:8000' }}/blog/fetch",
+        "method": "GET",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "page",
+              "value": "={{ $json.page }}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "5",
+      "name": "Split Post Numbers",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [850, 50],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "6",
+      "name": "Analyze Post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1050, 50],
+      "parameters": {
+        "url": "={{ $env.FTTS_API_URL || 'http://localhost:8000' }}/blog/analyze",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "post_no",
+              "value": "={{ $json }}"
+            }
+          ]
+        },
+        "bodyContentType": "json",
+        "options": {}
+      }
+    },
+    {
+      "id": "7",
+      "name": "Aggregate Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [1250, 50],
+      "parameters": {
+        "mode": "append",
+        "options": {}
+      }
+    },
+    {
+      "id": "8",
+      "name": "Save to File",
+      "type": "n8n-nodes-base.writeLocalFile",
+      "typeVersion": 1,
+      "position": [1450, 50],
+      "parameters": {
+        "fileName": "={{ 'mer_analysis_' + $now.format('YYYYMMDD_HHmmss') + '.jsonl' }}",
+        "dataPropertyName": "data",
+        "options": {}
+      }
+    },
+    {
+      "id": "9",
+      "name": "Send Discord Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1650, 50],
+      "parameters": {
+        "url": "={{ $env.DISCORD_WEBHOOK_URL }}",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "✅ 메르 블로그 크롤링 완료\\n\\n- 수집된 포스트: {{ $json.length }}개\\n- 저장 위치: {{ env.FTTS_DATA_DIR }}/{{ $prev.json.fileName }}\\n- 시간: {{ $now.format('YYYY-MM-DD HH:mm:ss') }}"
+            }
+          ]
+        },
+        "bodyContentType": "json",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Max Pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Max Pages": {
+      "main": [
+        [
+          {
+            "node": "Loop Pages (1-50)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Pages (1-50)": {
+      "main": [
+        [
+          {
+            "node": "Fetch Post List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Post List": {
+      "main": [
+        [
+          {
+            "node": "Split Post Numbers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Post Numbers": {
+      "main": [
+        [
+          {
+            "node": "Analyze Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Post": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Results": {
+      "main": [
+        [
+          {
+            "node": "Save to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to File": {
+      "main": [
+        [
+          {
+            "node": "Send Discord Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

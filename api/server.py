@@ -15,6 +15,8 @@ from core.event_processor import EventProcessor
 from core.weight_engine import WeightEngine
 from core.causal_graph import CausalGraph
 from monitoring.alert_manager import get_alert_manager
+from data_collection import blog_scraper
+from nlp import mer_analyzer
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +62,30 @@ class AnalyzeResponse(BaseModel):
     company_edges: int
     signals: list[SignalResult]
     summary: str          # Discord에 바로 붙여넣기용 마크다운 요약
+
+
+class BlogFetchResponse(BaseModel):
+    page: int
+    post_nos: list[str]
+
+
+class BlogAnalyzeRequest(BaseModel):
+    post_no: str = Field(..., description="블로그 포스트 번호")
+
+
+class BlogAnalyzeResponse(BaseModel):
+    post_no: str
+    title: str
+    published_at: str
+    events: list[str]
+    primary_source: str
+    reference_sources: list[str]
+    source_correlations: list[dict]
+    affected_industries: list[str]
+    affected_companies: list[str]
+    causal_chain: str
+    confidence: float
+    summary: str
 
 
 # ── 헬스체크 ──────────────────────────────────────────────────────
@@ -157,6 +183,60 @@ def analyze(req: AnalyzeRequest):
         signals=signals,
         summary=summary,
     )
+
+
+# ── 메르 블로그 크롤링 & 분석 ─────────────────────────────────────
+
+@app.get("/blog/fetch", response_model=BlogFetchResponse)
+def blog_fetch(page: int = 1):
+    """메르 블로그 특정 페이지의 포스트 번호 목록 반환 (페이지당 30개)."""
+    if page < 1:
+        raise HTTPException(status_code=400, detail="page는 1 이상이어야 합니다.")
+
+    try:
+        all_post_nos = blog_scraper._get_all_post_nos(max_pages=page)
+        start = (page - 1) * 30
+        end = page * 30
+        page_post_nos = all_post_nos[start:end]
+        return BlogFetchResponse(page=page, post_nos=page_post_nos)
+    except Exception as e:
+        logger.error("블로그 목록 수집 실패: %s", e)
+        raise HTTPException(status_code=500, detail=f"블로그 목록 수집 실패: {str(e)}")
+
+
+@app.post("/blog/analyze", response_model=BlogAnalyzeResponse)
+def blog_analyze(req: BlogAnalyzeRequest):
+    """메르 블로그 포스트를 메르식으로 분석 (사건 → 정보원 → 인과관계)."""
+    try:
+        post = blog_scraper._fetch_post(req.post_no)
+        if not post:
+            raise HTTPException(status_code=404, detail=f"포스트를 찾을 수 없습니다: {req.post_no}")
+
+        analysis = mer_analyzer.analyze_mer_blog(
+            title=post.title,
+            content=post.content,
+            source_name="메르 블로그",
+        )
+
+        return BlogAnalyzeResponse(
+            post_no=req.post_no,
+            title=post.title,
+            published_at=post.published_at.isoformat(),
+            events=analysis.events,
+            primary_source=analysis.primary_source,
+            reference_sources=analysis.reference_sources,
+            source_correlations=analysis.source_correlations,
+            affected_industries=analysis.affected_industries,
+            affected_companies=analysis.affected_companies,
+            causal_chain=analysis.causal_chain,
+            confidence=analysis.confidence,
+            summary=analysis.summary,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("블로그 분석 실패 post_no=%s: %s", req.post_no, e)
+        raise HTTPException(status_code=500, detail=f"분석 실패: {str(e)}")
 
 
 # ── 헬퍼 ─────────────────────────────────────────────────────────
