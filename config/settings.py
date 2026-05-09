@@ -37,3 +37,6 @@ LIVE_TRADING_ACCURACY_GATE: float = float(os.getenv("LIVE_TRADING_ACCURACY_GATE"
 
 # ── Paper Trading ─────────────────────────────────────────────
 PAPER_INITIAL_CASH: float = float(os.getenv("PAPER_INITIAL_CASH", "10000000"))  # 1천만 원
+
+# ── Anthropic ────────────────────────────────────────────────
+ANTHROPIC_MODEL: str = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
