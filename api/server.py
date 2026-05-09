@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from datetime import datetime, timezone
 from typing import Optional
@@ -17,6 +18,7 @@ from core.causal_graph import CausalGraph
 from monitoring.alert_manager import get_alert_manager
 from data_collection import blog_scraper
 from nlp import mer_analyzer
+from core import mer_ingest, ticker_mapper
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +79,7 @@ class BlogAnalyzeResponse(BaseModel):
     post_no: str
     title: str
     published_at: str
+    is_investment_related: bool
     events: list[str]
     primary_source: str
     reference_sources: list[str]
@@ -204,6 +207,30 @@ def blog_fetch(page: int = 1):
         raise HTTPException(status_code=500, detail=f"블로그 목록 수집 실패: {str(e)}")
 
 
+@app.get("/blog/fetch/all")
+def blog_fetch_all(max_pages: int = 50, jsonl_path: str = "/Users/kangbook/Library/Mobile Documents/com~apple~CloudDocs/FTTS/data/raw/mer_analysis.jsonl"):
+    """메르 블로그 전체 포스트 번호 목록 반환 (이미 분석된 포스트 제외)."""
+    import os
+    try:
+        post_nos = blog_scraper._get_all_post_nos(max_pages=max_pages)
+
+        # 이미 분석된 post_no 로드
+        seen: set[str] = set()
+        if os.path.exists(jsonl_path):
+            with open(jsonl_path) as f:
+                for line in f:
+                    try:
+                        seen.add(json.loads(line)["post_no"])
+                    except Exception:
+                        pass
+
+        new_nos = [no for no in post_nos if no not in seen]
+        return {"total": len(new_nos), "skipped": len(seen), "post_nos": new_nos}
+    except Exception as e:
+        logger.error("블로그 전체 목록 수집 실패: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/blog/analyze", response_model=BlogAnalyzeResponse)
 def blog_analyze(req: BlogAnalyzeRequest):
     """메르 블로그 포스트를 메르식으로 분석 (사건 → 정보원 → 인과관계)."""
@@ -222,6 +249,7 @@ def blog_analyze(req: BlogAnalyzeRequest):
             post_no=req.post_no,
             title=post.title,
             published_at=post.published_at.isoformat(),
+            is_investment_related=analysis.is_investment_related,
             events=analysis.events,
             primary_source=analysis.primary_source,
             reference_sources=analysis.reference_sources,
@@ -237,6 +265,69 @@ def blog_analyze(req: BlogAnalyzeRequest):
     except Exception as e:
         logger.error("블로그 분석 실패 post_no=%s: %s", req.post_no, e)
         raise HTTPException(status_code=500, detail=f"분석 실패: {str(e)}")
+
+
+_DEFAULT_JSONL = "/Users/kangbook/Library/Mobile Documents/com~apple~CloudDocs/FTTS/data/raw/mer_analysis.jsonl"
+
+
+@app.post("/ingest")
+def ingest(jsonl_path: str = _DEFAULT_JSONL):
+    """JSONL → DB + CausalGraph 주입."""
+    graph = CausalGraph()
+    try:
+        with get_session() as session:
+            results = mer_ingest.ingest_jsonl(jsonl_path, session, graph)
+        return {
+            "ingested": len(results),
+            "nodes": graph.node_count,
+            "edges": graph.edge_count,
+        }
+    except Exception as e:
+        logger.error("ingest 실패: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/sources")
+def sources():
+    """정보원별 등급/신뢰도 리포트."""
+    with get_session() as session:
+        return mer_ingest.source_report(session)
+
+
+@app.post("/tickers/map")
+def map_tickers(dry_run: bool = False):
+    """OTHER 마켓 기업 → Claude로 ticker 매핑 (통칭 기업 분해 포함)."""
+    with get_session() as session:
+        results = ticker_mapper.map_tickers(session, dry_run=dry_run)
+        return ticker_mapper.mapping_report(results)
+
+
+@app.post("/events/extract-dates")
+def extract_event_dates():
+    """Event 텍스트에서 실제 사건 발생일 추출 후 occurred_at 업데이트."""
+    with get_session() as session:
+        updated = ticker_mapper.extract_event_dates(session)
+        return {"updated": updated}
+
+
+@app.get("/stats")
+def stats():
+    """DB 현황: 이벤트/결정/포지션/아웃컴 카운트."""
+    from database.models import Event, Decision, Position, Outcome
+    with get_session() as session:
+        event_count = session.query(Event).count()
+        decision_count = session.query(Decision).count()
+        position_count = session.query(Position).count()
+        outcome_count = session.query(Outcome).count()
+        buy = session.query(Decision).filter(Decision.signal == "BUY").count()
+        sell = session.query(Decision).filter(Decision.signal == "SELL").count()
+        hold = session.query(Decision).filter(Decision.signal == "HOLD").count()
+        return {
+            "events": event_count,
+            "decisions": {"total": decision_count, "BUY": buy, "SELL": sell, "HOLD": hold},
+            "positions": position_count,
+            "outcomes": outcome_count,
+        }
 
 
 # ── 헬퍼 ─────────────────────────────────────────────────────────
