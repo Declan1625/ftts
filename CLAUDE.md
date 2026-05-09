@@ -18,19 +18,24 @@
 - 모의투자 파이프라인 자동화
 - n8n 워크플로우 설정 완료
 
-**2순위: ⏳ Render 배포** (다음)
-- FastAPI를 Render에 배포
-- PostgreSQL 연동
-- Discord 알림 활성화
+**2순위: ✅ Render 배포 완료** (2026-05-09)
+- FastAPI를 Render에 배포 (https://ftts.onrender.com)
+- SQLite 데이터베이스 연동
+- Discord 웹훅 알림 활성화
+- n8n 워크플로우 연동 (RSS → API → Discord)
+- **첫 실행 테스트 완료**: Discord 메시지 수신 확인
 
-**3순위: ⏳ 정확도 80% 달성**
-- accuracy_tracker 개선
-- weight_engine 튜닝
+**3순위: 🔄 정확도 80% 달성** (진행 중)
+- RSS 피드로 실시간 데이터 수집 (자동 진행)
+- accuracy_tracker 모니터링
+- weight_engine 튜닝 (BUY_THRESHOLD, SELL_THRESHOLD)
 - 신뢰도 필터링
+- **예상**: 1-2주 (실제 시장 데이터 누적)
 
-**4순위: ⏳ KIS 실전 모드**
+**4순위: ⏳ KIS 실전 모드** (80% 달성 후)
 - 80% 달성 후 실전 활성화
 - live_trader 운영 (금지 조건 해제)
+- 실전 거래 시작
 
 ## 핵심 모듈
 

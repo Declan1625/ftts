@@ -138,8 +138,8 @@ class WeightEngine:
             avg_grade_w = sum(
                 ev.source_grade_weight for ev in events if ev.event_node in contributors
             ) / len(contributors)
-            # 기여 이벤트 4건 이상이면 saturate
-            count_factor = min(1.0, len(contributors) / 4.0)
+            # 기여 이벤트 8건 이상이면 saturate
+            count_factor = min(1.0, len(contributors) / 8.0)
             confidence = max(0.0, min(1.0, avg_grade_w * count_factor))
         else:
             confidence = 0.0
