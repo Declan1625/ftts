@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -16,16 +17,28 @@ from core.event_processor import EventProcessor
 from core.weight_engine import WeightEngine
 from core.causal_graph import CausalGraph
 from monitoring.alert_manager import get_alert_manager
+from monitoring.scheduler import start_scheduler, stop_scheduler
 from data_collection import blog_scraper
 from nlp import mer_analyzer
 from core import mer_ingest, ticker_mapper
 
 logger = logging.getLogger(__name__)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    start_scheduler(interval_minutes=20)
+    logger.info("스케줄러 시작 완료")
+    yield
+    stop_scheduler()
+    logger.info("스케줄러 종료 완료")
+
+
 app = FastAPI(
     title="FTTS API",
     description="자가 진단형 주식 자동매매 시스템 — n8n 연동 엔드포인트",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(

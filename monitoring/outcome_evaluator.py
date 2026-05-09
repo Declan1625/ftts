@@ -25,7 +25,7 @@ from sqlalchemy.orm import Session
 
 from config import settings
 from database.db_manager import get_session
-from database.models import Company, Decision, Outcome, Source
+from database.models import CausalEdge, Company, Decision, Outcome, Source
 
 logger = logging.getLogger(__name__)
 
@@ -109,16 +109,10 @@ class OutcomeEvaluator:
         outcome.is_correct = is_correct
         outcome.evaluated_at = now
 
-        # Source 통계 업데이트
-        source = decision.company.events[0].source if decision.company.events else None
-        if source:
-            source.total_predictions += 1
-            if is_correct:
-                source.correct_predictions += 1
-            if source.total_predictions > 0:
-                source.accuracy = source.correct_predictions / source.total_predictions
-
         self._s.flush()
+
+        # self-feedback: company로 향하는 causal_edges 가중치 보정
+        self._update_causal_weights(decision, actual_return)
 
     def _judge_outcome(self, signal: str, actual_return: float) -> bool:
         """신호별 정답 판정."""
@@ -152,20 +146,62 @@ class OutcomeEvaluator:
             logger.debug(f"yfinance 오류 {ticker}: {e}")
             raise
 
+    def _update_causal_weights(self, decision: Decision, actual_return: float) -> None:
+        """결정 결과로 company를 향하는 causal_edges 가중치 보정."""
+        signal = decision.signal
+        # BUY: actual_return>0이 정답 / SELL: actual_return<0이 정답
+        if signal == "BUY":
+            error = actual_return - float(decision.predicted_weight)
+        elif signal == "SELL":
+            error = -actual_return - float(decision.predicted_weight)
+        else:
+            return  # HOLD는 보정 안 함
+
+        # company로 향하는 모든 엣지 보정
+        edges = (
+            self._s.query(CausalEdge)
+            .filter(CausalEdge.to_type == "company", CausalEdge.to_id == decision.company_id)
+            .all()
+        )
+        for edge in edges:
+            edge.update_weight(error, settings.LEARNING_RATE, confidence_factor=0.5)
+
+        if edges:
+            logger.debug(
+                "가중치 보정: company_id=%d, signal=%s, error=%.4f, edges=%d",
+                decision.company_id, signal, error, len(edges),
+            )
+
     def _refresh_source_stats(self) -> None:
         """모든 Source의 total_predictions, correct_predictions, accuracy 업데이트."""
+        from sqlalchemy import func as sqlfunc
         sources = self._s.query(Source).filter(Source.is_active == True).all()
         for src in sources:
-            evaluated = self._s.query(Outcome).join(Decision).filter(
-                Outcome.is_correct.isnot(None),
-                Decision.company.has(events__source_id=src.id),
-            ).all()
-
-            if evaluated:
-                correct = sum(1 for o in evaluated if o.is_correct)
-                src.total_predictions = len(evaluated)
+            # Source → Event → Company → Decision → Outcome 경로
+            rows = (
+                self._s.query(
+                    sqlfunc.count(Outcome.id).label("total"),
+                    sqlfunc.sum(sqlfunc.cast(Outcome.is_correct, sqlfunc.Integer())).label("correct"),
+                )
+                .join(Decision, Outcome.decision_id == Decision.id)
+                .join(Company, Decision.company_id == Company.id)
+                .filter(
+                    Outcome.is_correct.isnot(None),
+                    Company.id.in_(
+                        self._s.query(Company.id)
+                        .join(Company.events)
+                        .filter_by(source_id=src.id)
+                        .scalar_subquery()
+                    ),
+                )
+                .one()
+            )
+            total = rows.total or 0
+            correct = int(rows.correct or 0)
+            if total > 0:
+                src.total_predictions = total
                 src.correct_predictions = correct
-                src.accuracy = correct / len(evaluated)
+                src.accuracy = correct / total
 
         self._s.flush()
 

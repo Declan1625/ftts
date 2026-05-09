@@ -26,11 +26,17 @@
 - **첫 실행 테스트 완료**: Discord 메시지 수신 확인
 
 **3순위: 🔄 정확도 80% 달성** (진행 중)
-- RSS 피드로 실시간 데이터 수집 (자동 진행)
-- accuracy_tracker 모니터링
+- n8n 워크플로우: 메르/DART/RSS 3개 흐름 한 페이지 통합 완료
+- DART API 키 발급 완료, bgn_de=20260101 파라미터 추가 필요 (n8n 수동)
+- RSS: Render 슬립 이슈로 테스트 대기 중
+- accuracy_tracker predictions 누적 여부 미확인
 - weight_engine 튜닝 (BUY_THRESHOLD, SELL_THRESHOLD)
-- 신뢰도 필터링
 - **예상**: 1-2주 (실제 시장 데이터 누적)
+
+**다음 할 일**
+1. n8n DART 노드에 `bgn_de=20260101` 수동 추가 → 테스트
+2. Render 깨우고 RSS 테스트
+3. accuracy_tracker 확인 (predictions 쌓이는지)
 
 **4순위: ⏳ KIS 실전 모드** (80% 달성 후)
 - 80% 달성 후 실전 활성화
