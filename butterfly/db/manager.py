@@ -21,6 +21,8 @@ _MIGRATIONS = [
     "ALTER TABLE trades ADD COLUMN stop_loss_price REAL",
     "ALTER TABLE trades ADD COLUMN pnl_pct REAL DEFAULT 0",
     "ALTER TABLE trades ADD COLUMN status TEXT DEFAULT 'open'",
+    "ALTER TABLE trades ADD COLUMN risk_tier TEXT DEFAULT 'MEDIUM'",
+    "ALTER TABLE signals ADD COLUMN risk_tier TEXT DEFAULT 'MEDIUM'",
 ]
 
 

@@ -42,6 +42,9 @@
   .badge-buy { background: #1a3a24; color: #3fb950; }
   .badge-sell { background: #3a1a1a; color: #f85149; }
   .badge-done { background: #1a2a3a; color: #58a6ff; }
+  .badge-HIGH   { background: #3a1a1a; color: #f85149; }
+  .badge-MEDIUM { background: #2a2a1a; color: #e3b341; }
+  .badge-STABLE { background: #1a2a3a; color: #58a6ff; }
   .conf-bar { height: 3px; background: #30363d; border-radius: 2px; margin-top: 6px; }
   .conf-fill { height: 100%; border-radius: 2px; background: #3fb950; }
 
@@ -65,7 +68,7 @@
   <div class="card"><div class="label">이벤트</div><div class="value" id="s-events">-</div></div>
   <div class="card"><div class="label">체인</div><div class="value" id="s-chains">-</div></div>
   <div class="card"><div class="label">신호</div><div class="value" id="s-signals">-</div></div>
-  <div class="card"><div class="label">포지션</div><div class="value" id="s-trades">-</div></div>
+  <div class="card"><div class="label">축적 패턴</div><div class="value" id="s-patterns">-</div></div>
 </div>
 
 <button class="btn btn-run" id="btn-run" onclick="runPipeline()">▶ 파이프라인 실행</button>
@@ -104,6 +107,7 @@
   <table class="pos-table">
     <thead>
       <tr>
+        <th>티어</th>
         <th>종목</th>
         <th>수량</th>
         <th>매수가</th>
@@ -175,7 +179,11 @@ async function loadStats() {
   document.getElementById('s-events').textContent = d.events;
   document.getElementById('s-chains').textContent = d.chains;
   document.getElementById('s-signals').textContent = d.signals;
-  document.getElementById('s-trades').textContent = d.trades;
+  try {
+    const rp = await fetch(BASE + '/patterns?limit=1000');
+    const dp = await rp.json();
+    document.getElementById('s-patterns').textContent = dp.length;
+  } catch(e) { document.getElementById('s-patterns').textContent = '-'; }
 }
 
 async function loadPortfolio() {
@@ -195,12 +203,15 @@ async function loadPortfolio() {
 
   const tbody = document.getElementById('positions-body');
   if (!positions.length) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty">포지션 없음</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">포지션 없음 — 파이프라인 실행 후 신호가 생기면 자동 매수</td></tr>';
     return;
   }
+  const tierLabel = { HIGH: '위험', MEDIUM: '중간', STABLE: '안정' };
   tbody.innerHTML = positions.map(p => {
     const pctClass = p.pnl_pct >= 0 ? 'pnl-pos' : 'pnl-neg';
+    const tier = p.risk_tier || 'MEDIUM';
     return `<tr>
+      <td><span class="badge badge-${tier}">${tierLabel[tier]||tier}</span></td>
       <td><b>${p.company || p.ticker}</b><br><span style="color:#8b949e;font-size:0.7rem">${p.ticker}</span></td>
       <td>${p.qty}주</td>
       <td>${fmt(p.entry_price)}</td>

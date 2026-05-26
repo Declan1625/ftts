@@ -12,7 +12,7 @@ import httpx
 import logging
 
 from butterfly.db.manager import init_db, get_session
-from butterfly.db.models import Event, ButterflyChain, Signal, Trade, Portfolio
+from butterfly.db.models import Event, ButterflyChain, Signal, Trade, Portfolio, CausalPattern
 from butterfly.sources.collector import collect_and_save
 from butterfly.engine.pipeline import process_pending
 from butterfly.trading.simulator import run_simulation
@@ -166,6 +166,7 @@ def portfolio():
             "id": t.id,
             "ticker": t.ticker,
             "company": t.company_name or t.ticker,
+            "risk_tier": t.risk_tier or "MEDIUM",
             "qty": t.quantity,
             "entry_price": t.price_at_entry,
             "current_price": t.current_price or t.price_at_entry,
@@ -227,6 +228,17 @@ def signals(limit: int = 20):
     return [{"id": r.id, "ticker": r.ticker, "company": r.company_name,
              "direction": r.direction, "confidence": r.confidence,
              "executed": r.executed} for r in rows]
+
+
+@app.get("/patterns")
+def patterns(limit: int = 20):
+    s = get_session()
+    rows = (s.query(CausalPattern)
+            .order_by(CausalPattern.occurrence_count.desc())
+            .limit(limit).all())
+    return [{"id": r.id, "sectors": r.sector_key, "summary": r.trigger_summary,
+             "occurrences": r.occurrence_count, "accuracy": round(r.accuracy * 100, 1),
+             "avg_confidence": round(r.avg_confidence * 100, 1)} for r in rows]
 
 
 @app.get("/chains/{chain_id}")
