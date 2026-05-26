@@ -8,77 +8,157 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #0d1117; color: #e6edf3; font-family: -apple-system, sans-serif; padding: 16px; }
   h1 { font-size: 1.4rem; margin-bottom: 16px; }
-  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
-  .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; }
-  .card .label { font-size: 0.75rem; color: #8b949e; margin-bottom: 4px; }
-  .card .value { font-size: 1.8rem; font-weight: bold; }
-  .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+  h2 { font-size: 0.95rem; color: #8b949e; margin: 18px 0 10px; }
+  .grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
+  .grid4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px; }
+  .card .label { font-size: 0.72rem; color: #8b949e; margin-bottom: 4px; }
+  .card .value { font-size: 1.6rem; font-weight: bold; }
+  .card .value.sm { font-size: 1.1rem; }
+  .card .value.pos { color: #3fb950; }
+  .card .value.neg { color: #f85149; }
+  .btn { width: 100%; padding: 13px; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: bold; cursor: pointer; margin-bottom: 8px; }
   .btn-run { background: #238636; color: white; }
   .btn-run:disabled { background: #1a3a24; color: #555; }
   .btn-refresh { background: #1f6feb; color: white; }
-  .signal { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px; margin-bottom: 8px; }
-  .signal .ticker { font-weight: bold; font-size: 1rem; }
-  .signal .meta { font-size: 0.8rem; color: #8b949e; margin-top: 4px; }
+  .status { text-align: center; font-size: 0.8rem; color: #8b949e; margin: 6px 0; min-height: 18px; }
+
+  /* 포지션 테이블 */
+  .pos-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+  .pos-table th { color: #8b949e; padding: 6px 4px; text-align: left; border-bottom: 1px solid #30363d; }
+  .pos-table td { padding: 7px 4px; border-bottom: 1px solid #21262d; }
+  .pos-table tr:last-child td { border-bottom: none; }
+  .pnl-pos { color: #3fb950; font-weight: bold; }
+  .pnl-neg { color: #f85149; font-weight: bold; }
+  .empty { color: #8b949e; font-size: 0.82rem; text-align: center; padding: 16px; }
+
+  /* 신호 */
+  .signal { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 11px; margin-bottom: 7px; }
+  .signal .ticker { font-weight: bold; font-size: 0.95rem; }
+  .signal .meta { font-size: 0.75rem; color: #8b949e; margin-top: 4px; }
   .buy { border-left: 3px solid #3fb950; }
   .sell { border-left: 3px solid #f85149; }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+  .badge { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 0.72rem; font-weight: bold; }
   .badge-buy { background: #1a3a24; color: #3fb950; }
   .badge-sell { background: #3a1a1a; color: #f85149; }
   .badge-done { background: #1a2a3a; color: #58a6ff; }
-  .status { text-align: center; font-size: 0.85rem; color: #8b949e; margin: 8px 0; min-height: 20px; }
-  .section-title { font-size: 0.9rem; color: #8b949e; margin: 16px 0 8px; display: flex; justify-content: space-between; }
-  .conf-bar { height: 4px; background: #30363d; border-radius: 2px; margin-top: 6px; }
+  .conf-bar { height: 3px; background: #30363d; border-radius: 2px; margin-top: 6px; }
   .conf-fill { height: 100%; border-radius: 2px; background: #3fb950; }
-  #log-box { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 12px; height: 220px; overflow-y: auto; font-family: monospace; font-size: 0.72rem; line-height: 1.6; }
+
+  /* 로그 */
+  #log-box { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 10px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 0.7rem; line-height: 1.6; }
   #log-box .log-line { color: #8b949e; }
   #log-box .log-line.hi { color: #3fb950; }
   #log-box .log-line.err { color: #f85149; }
   .dot { width: 8px; height: 8px; border-radius: 50%; background: #3fb950; display: inline-block; margin-right: 6px; animation: pulse 1.5s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
   .dot.off { background: #30363d; animation: none; }
+  .sec-title { font-size: 0.85rem; color: #8b949e; margin: 16px 0 8px; display: flex; justify-content: space-between; align-items: center; }
+  .divider { border: none; border-top: 1px solid #21262d; margin: 14px 0; }
 </style>
 </head>
 <body>
 <h1>🦋 나비효과 AI</h1>
 
-<div class="grid" id="stats">
+<!-- 시스템 통계 -->
+<div class="grid4">
   <div class="card"><div class="label">이벤트</div><div class="value" id="s-events">-</div></div>
   <div class="card"><div class="label">체인</div><div class="value" id="s-chains">-</div></div>
   <div class="card"><div class="label">신호</div><div class="value" id="s-signals">-</div></div>
-  <div class="card"><div class="label">모의투자</div><div class="value" id="s-trades">-</div></div>
+  <div class="card"><div class="label">포지션</div><div class="value" id="s-trades">-</div></div>
 </div>
 
 <button class="btn btn-run" id="btn-run" onclick="runPipeline()">▶ 파이프라인 실행</button>
 <button class="btn btn-refresh" onclick="loadAll()">↻ 새로고침</button>
 <div class="status" id="status"></div>
 
-<div class="section-title">
+<hr class="divider">
+
+<!-- 포트폴리오 요약 -->
+<div class="sec-title">💼 포트폴리오</div>
+<div class="grid2">
+  <div class="card">
+    <div class="label">평가총액</div>
+    <div class="value sm" id="p-total">-</div>
+  </div>
+  <div class="card">
+    <div class="label">보유현금</div>
+    <div class="value sm" id="p-cash">-</div>
+  </div>
+  <div class="card">
+    <div class="label">투자금액</div>
+    <div class="value sm" id="p-invested">-</div>
+  </div>
+  <div class="card">
+    <div class="label">누적 수익률</div>
+    <div class="value sm" id="p-pnl-pct">-</div>
+  </div>
+</div>
+
+<!-- 포지션 테이블 -->
+<div class="sec-title">
+  <span>오픈 포지션</span>
+  <span id="p-open-cnt" style="color:#58a6ff;font-size:0.8rem"></span>
+</div>
+<div class="card" style="overflow-x:auto;padding:0">
+  <table class="pos-table">
+    <thead>
+      <tr>
+        <th>종목</th>
+        <th>수량</th>
+        <th>매수가</th>
+        <th>현재가</th>
+        <th>목표/손절</th>
+        <th>손익</th>
+      </tr>
+    </thead>
+    <tbody id="positions-body">
+      <tr><td colspan="6" class="empty">포지션 없음</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr class="divider">
+
+<!-- 로그 -->
+<div class="sec-title">
   <span><span class="dot off" id="dot"></span>실시간 로그</span>
   <span style="cursor:pointer;color:#58a6ff" onclick="clearLog()">지우기</span>
 </div>
 <div id="log-box"></div>
 
-<div class="section-title">최근 신호</div>
+<!-- 신호 -->
+<div class="sec-title">최근 신호</div>
 <div id="signals-list"></div>
 
 <script>
 const BASE = '';
 let es = null;
 
+function fmt(n) {
+  if (n == null) return '-';
+  return Math.round(n).toLocaleString('ko-KR') + '원';
+}
+function fmtPct(n) {
+  if (n == null) return '-';
+  const s = n >= 0 ? '+' : '';
+  return s + n.toFixed(2) + '%';
+}
+
 function connectSSE() {
   if (es) es.close();
   es = new EventSource(BASE + '/logs/stream');
   document.getElementById('dot').classList.remove('off');
-
   es.onmessage = e => {
     if (e.data === 'ping') return;
     const box = document.getElementById('log-box');
     const line = document.createElement('div');
-    line.className = 'log-line' + (e.data.includes('✅') || e.data.includes('완료') ? ' hi' : e.data.includes('실패') || e.data.includes('ERROR') ? ' err' : '');
+    const isGood = e.data.includes('✅') || e.data.includes('매수') || e.data.includes('완료') || e.data.includes('목표');
+    const isBad = e.data.includes('실패') || e.data.includes('ERROR') || e.data.includes('손절');
+    line.className = 'log-line' + (isGood ? ' hi' : isBad ? ' err' : '');
     line.textContent = e.data;
     box.appendChild(line);
     box.scrollTop = box.scrollHeight;
-    // 신호/모의투자 완료 시 자동 새로고침
     if (e.data.includes('파이프라인 완료')) loadAll();
   };
   es.onerror = () => {
@@ -87,9 +167,7 @@ function connectSSE() {
   };
 }
 
-function clearLog() {
-  document.getElementById('log-box').innerHTML = '';
-}
+function clearLog() { document.getElementById('log-box').innerHTML = ''; }
 
 async function loadStats() {
   const r = await fetch(BASE + '/stats');
@@ -100,17 +178,50 @@ async function loadStats() {
   document.getElementById('s-trades').textContent = d.trades;
 }
 
+async function loadPortfolio() {
+  const r = await fetch(BASE + '/portfolio');
+  const d = await r.json();
+
+  document.getElementById('p-total').textContent = fmt(d.current_value);
+  document.getElementById('p-cash').textContent = fmt(d.cash);
+  document.getElementById('p-invested').textContent = fmt(d.invested);
+
+  const pctEl = document.getElementById('p-pnl-pct');
+  pctEl.textContent = fmtPct(d.total_pnl_pct);
+  pctEl.className = 'value sm ' + (d.total_pnl_pct >= 0 ? 'pos' : 'neg');
+
+  const positions = d.positions || [];
+  document.getElementById('p-open-cnt').textContent = positions.length + '건';
+
+  const tbody = document.getElementById('positions-body');
+  if (!positions.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">포지션 없음</td></tr>';
+    return;
+  }
+  tbody.innerHTML = positions.map(p => {
+    const pctClass = p.pnl_pct >= 0 ? 'pnl-pos' : 'pnl-neg';
+    return `<tr>
+      <td><b>${p.company || p.ticker}</b><br><span style="color:#8b949e;font-size:0.7rem">${p.ticker}</span></td>
+      <td>${p.qty}주</td>
+      <td>${fmt(p.entry_price)}</td>
+      <td>${fmt(p.current_price)}</td>
+      <td style="font-size:0.7rem;color:#8b949e">🎯${fmt(p.target_price)}<br>🛑${fmt(p.stop_loss)}</td>
+      <td class="${pctClass}">${fmtPct(p.pnl_pct)}<br><span style="font-size:0.7rem">${Math.round(p.pnl).toLocaleString()}원</span></td>
+    </tr>`;
+  }).join('');
+}
+
 async function loadSignals() {
-  const r = await fetch(BASE + '/signals?limit=20');
+  const r = await fetch(BASE + '/signals?limit=15');
   const list = await r.json();
   const el = document.getElementById('signals-list');
   if (!list.length) { el.innerHTML = '<div class="status">신호 없음</div>'; return; }
   el.innerHTML = list.map(s => `
     <div class="signal ${s.direction === 'BUY' ? 'buy' : 'sell'}">
       <div class="ticker">
-        ${s.company || s.ticker} <span style="color:#8b949e;font-size:0.8rem">${s.ticker}</span>
+        ${s.company || s.ticker} <span style="color:#8b949e;font-size:0.78rem">${s.ticker}</span>
         <span class="badge ${s.direction === 'BUY' ? 'badge-buy' : 'badge-sell'}" style="float:right">${s.direction}</span>
-        ${s.executed ? '<span class="badge badge-done" style="float:right;margin-right:6px">✅주문완료</span>' : ''}
+        ${s.executed ? '<span class="badge badge-done" style="float:right;margin-right:6px">✅매수완료</span>' : ''}
       </div>
       <div class="conf-bar"><div class="conf-fill" style="width:${(s.confidence*100).toFixed(0)}%"></div></div>
       <div class="meta">신뢰도 ${(s.confidence*100).toFixed(0)}%</div>
@@ -120,21 +231,14 @@ async function loadSignals() {
 
 async function runPipeline() {
   const btn = document.getElementById('btn-run');
-  btn.disabled = true;
-  btn.textContent = '⏳ 실행 중...';
-  try {
-    await fetch(BASE + '/run');
-  } catch(e) {}
+  btn.disabled = true; btn.textContent = '⏳ 실행 중...';
+  try { await fetch(BASE + '/run'); } catch(e) {}
   setTimeout(() => { btn.disabled = false; btn.textContent = '▶ 파이프라인 실행'; }, 5000);
 }
 
-function setStatus(msg) {
-  document.getElementById('status').textContent = msg;
-}
-
 async function loadAll() {
-  await Promise.all([loadStats(), loadSignals()]);
-  setStatus('업데이트: ' + new Date().toLocaleTimeString('ko-KR'));
+  await Promise.all([loadStats(), loadPortfolio(), loadSignals()]);
+  document.getElementById('status').textContent = '업데이트: ' + new Date().toLocaleTimeString('ko-KR');
 }
 
 connectSSE();

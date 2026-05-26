@@ -12,10 +12,10 @@ import httpx
 import logging
 
 from butterfly.db.manager import init_db, get_session
-from butterfly.db.models import Event, ButterflyChain, Signal, Trade
+from butterfly.db.models import Event, ButterflyChain, Signal, Trade, Portfolio
 from butterfly.sources.collector import collect_and_save
 from butterfly.engine.pipeline import process_pending
-from butterfly.trading.paper_trader import execute_pending
+from butterfly.trading.simulator import run_simulation
 from butterfly import config
 
 logging.basicConfig(level=logging.INFO)
@@ -23,7 +23,6 @@ logger = logging.getLogger(__name__)
 
 scheduler = AsyncIOScheduler()
 
-# 실시간 로그 버퍼 (최근 100개)
 _log_buffer: deque[str] = deque(maxlen=100)
 _log_listeners: list[asyncio.Queue] = []
 
@@ -57,9 +56,9 @@ async def run_pipeline():
         processed = await asyncio.to_thread(process_pending, s)
         logger.info("✅ 분석 완료: %d건", processed)
 
-        logger.info("📈 모의투자 실행 중...")
-        traded = await asyncio.to_thread(execute_pending, s)
-        logger.info("✅ 모의투자 완료: %d건", traded)
+        logger.info("💼 시뮬레이션 실행 중...")
+        traded = await asyncio.to_thread(run_simulation, s)
+        logger.info("✅ 시뮬레이션 완료: %d건 매수", traded)
 
         if processed > 0:
             await notify_discord(s)
@@ -71,7 +70,6 @@ async def run_pipeline():
 async def notify_discord(session):
     signals = (
         session.query(Signal)
-        .filter_by(executed=False)
         .order_by(Signal.created_at.desc())
         .limit(10)
         .all()
@@ -79,16 +77,19 @@ async def notify_discord(session):
     if not signals or not config.DISCORD_WEBHOOK or not config.DISCORD_WEBHOOK.startswith("http"):
         return
 
-    lines = ["🦋 **나비효과 신호 & 모의투자 실행**\n"]
+    p = session.query(Portfolio).first()
+    cash = p.cash if p else 0
+    initial = p.initial_cash if p else config.PAPER_INITIAL_CASH
+    open_cnt = session.query(func.count(Trade.id)).filter_by(status="open").scalar()
+
+    lines = [f"🦋 **나비효과 AI 리포트**\n💼 현금: {cash:,.0f}원 | 오픈 포지션: {open_cnt}건\n"]
     for s in signals:
         icon = "🟢" if s.direction == "BUY" else "🔴"
-        trade_status = "✅ 주문완료" if s.executed else "⏳ 대기"
-        lines.append(f"{icon} {s.company_name}({s.ticker}) {s.direction} | 신뢰도 {s.confidence*100:.0f}% | {trade_status}")
+        lines.append(f"{icon} {s.company_name}({s.ticker}) {s.direction} | 신뢰도 {s.confidence*100:.0f}%")
 
-    msg = "\n".join(lines)
     try:
         async with httpx.AsyncClient() as client:
-            await client.post(config.DISCORD_WEBHOOK, json={"content": msg}, timeout=5)
+            await client.post(config.DISCORD_WEBHOOK, json={"content": "\n".join(lines)}, timeout=5)
     except Exception as e:
         logger.error("Discord 전송 실패: %s", e)
 
@@ -135,6 +136,62 @@ def stats():
     }
 
 
+@app.get("/portfolio")
+def portfolio():
+    s = get_session()
+    p = s.query(Portfolio).first()
+    if not p:
+        return {
+            "initial_cash": config.PAPER_INITIAL_CASH,
+            "cash": config.PAPER_INITIAL_CASH,
+            "invested": 0,
+            "current_value": config.PAPER_INITIAL_CASH,
+            "unrealized_pnl": 0,
+            "realized_pnl": 0,
+            "total_pnl_pct": 0,
+            "positions": [],
+        }
+
+    open_trades = s.query(Trade).filter_by(status="open").order_by(Trade.entered_at.desc()).all()
+    positions = []
+    invested = 0
+    current_val = 0
+
+    for t in open_trades:
+        entry_val = (t.price_at_entry or 0) * t.quantity
+        cur_val = (t.current_price or t.price_at_entry or 0) * t.quantity
+        invested += entry_val
+        current_val += cur_val
+        positions.append({
+            "id": t.id,
+            "ticker": t.ticker,
+            "company": t.company_name or t.ticker,
+            "qty": t.quantity,
+            "entry_price": t.price_at_entry,
+            "current_price": t.current_price or t.price_at_entry,
+            "target_price": t.target_price,
+            "stop_loss": t.stop_loss_price,
+            "pnl": t.pnl or 0,
+            "pnl_pct": t.pnl_pct or 0,
+            "status": t.status,
+        })
+
+    total_value = p.cash + current_val
+    unrealized = current_val - invested
+    total_pnl_pct = (total_value - p.initial_cash) / p.initial_cash * 100
+
+    return {
+        "initial_cash": p.initial_cash,
+        "cash": p.cash,
+        "invested": invested,
+        "current_value": total_value,
+        "unrealized_pnl": unrealized,
+        "realized_pnl": p.realized_pnl or 0,
+        "total_pnl_pct": total_pnl_pct,
+        "positions": positions,
+    }
+
+
 @app.get("/run")
 async def run_now(background_tasks: BackgroundTasks):
     background_tasks.add_task(run_pipeline)
@@ -143,12 +200,10 @@ async def run_now(background_tasks: BackgroundTasks):
 
 @app.get("/logs/stream")
 async def log_stream():
-    """SSE 실시간 로그 스트리밍"""
     q: asyncio.Queue = asyncio.Queue(maxsize=50)
     _log_listeners.append(q)
 
     async def generate():
-        # 기존 버퍼 먼저 전송
         for msg in list(_log_buffer):
             yield f"data: {msg}\n\n"
         try:
