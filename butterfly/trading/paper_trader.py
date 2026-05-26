@@ -32,13 +32,10 @@ def execute_pending(session: Session) -> int:
                 continue
 
             budget = config.PAPER_INITIAL_CASH * config.POSITION_SIZE_RATIO
-            qty = int(budget / price)
-            if qty < 1:
-                logger.warning("수량 부족: %s (예산 %.0f, 주가 %.0f)", signal.ticker, budget, price)
-                continue
+            qty = max(1, int(budget / price))
 
             if signal.direction == "BUY":
-                kis.buy(signal.ticker, qty)
+                kis.buy(signal.ticker, qty, int(price))
             else:
                 logger.info("SELL 신호 %s - 포지션 없어 스킵", signal.ticker)
                 signal.executed = True

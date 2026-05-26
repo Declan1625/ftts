@@ -55,7 +55,7 @@ class KISPaperClient:
         logger.info(f"주가 조회: {ticker} = {price:,.0f}원")
         return price
 
-    def buy(self, ticker: str, qty: int) -> str:
+    def buy(self, ticker: str, qty: int, price: int) -> str:
         cano, prdt = self.account_no.split("-")
         r = requests.post(f"{BASE}/uapi/domestic-stock/v1/trading/order-cash",
             headers=self._headers("VTTC0802U"),
@@ -63,13 +63,13 @@ class KISPaperClient:
                 "CANO": cano,
                 "ACNT_PRDT_CD": prdt,
                 "PDNO": ticker,
-                "ORD_DVSN": "01",
+                "ORD_DVSN": "00",
                 "ORD_QTY": str(qty),
-                "ORD_UNPR": "0",
+                "ORD_UNPR": str(price),
             }, timeout=10, verify=False)
         data = r.json()
         if data.get("rt_cd") != "0":
             raise KISError(f"매수 실패 [{ticker}]: {data.get('msg1')}")
         order_no = data.get("output", {}).get("ODNO", "")
-        logger.info("매수 주문 완료: %s %d주 주문번호=%s", ticker, qty, order_no)
+        logger.info(f"매수 주문 완료: {ticker} {qty}주 @{price:,}원 주문번호={order_no}")
         return order_no
