@@ -114,6 +114,14 @@ def analyze(title: str, body: str) -> dict | None:
             wait = 10 * (2 ** attempt)
             logger.warning("Claude 레이트리밋, %ds 대기 (%d/3)", wait, attempt + 1)
             time.sleep(wait)
+        except anthropic.BadRequestError as e:
+            # 크레딧 부족 등 재시도 불가 에러 → 즉시 중단
+            msg = str(e)
+            if "credit balance" in msg or "billing" in msg.lower():
+                logger.error("🚨 Anthropic 크레딧 부족 — console.anthropic.com에서 충전 필요")
+                return None  # 파이프라인 전체 멈추지 않게 None 반환
+            logger.error("분석 실패 (재시도불가): %s", e)
+            return None
         except Exception as e:
             logger.error("분석 실패 [시도 %d]: %s", attempt + 1, e)
             if attempt == 2:
