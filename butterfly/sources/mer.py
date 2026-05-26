@@ -22,7 +22,7 @@ def fetch() -> list[dict]:
 
     items = []
     try:
-        posts = fetch_recent_posts(count=5)
+        posts = fetch_recent_posts(count=3)  # 5→3: 서버 부하 + 속도
         for p in posts:
             items.append({
                 "source": "mer",

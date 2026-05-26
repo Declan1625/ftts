@@ -42,13 +42,17 @@ def _classify_tier(sectors: list[str]) -> str:
     return "MEDIUM"
 
 
-def process_pending(session: Session) -> int:
-    events = session.query(Event).filter_by(processed=False).all()
+def process_pending(session: Session, max_per_cycle: int = 30) -> int:
+    events = (session.query(Event)
+              .filter_by(processed=False)
+              .all())
     if not events:
         return 0
 
-    # 중요도 순 정렬 (FOMC, 북한 등 먼저 처리)
+    # 중요도 순 정렬 후 한 사이클 최대 처리 수 제한
     events.sort(key=lambda e: score_event(e), reverse=True)
+    events = events[:max_per_cycle]
+    logger.info("미처리 이벤트 처리 시작: %d건 (최대 %d)", len(events), max_per_cycle)
 
     processed = 0
     claude_calls = 0
