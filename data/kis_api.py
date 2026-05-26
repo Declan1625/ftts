@@ -36,7 +36,7 @@ class KISClient:
     """한국투자증권 API 클라이언트."""
 
     BASE_URL = "https://openapi.koreainvestment.com:9443"
-    MOCK_BASE_URL = "https://openapivideo.koreainvestment.com:9443"  # 모의투자용
+    MOCK_BASE_URL = "https://openapivts.koreainvestment.com:9443"  # 모의투자용
 
     def __init__(
         self,
