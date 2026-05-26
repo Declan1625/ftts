@@ -1,0 +1,145 @@
+{
+  "name": "나비효과 AI",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 30
+            }
+          ]
+        }
+      },
+      "id": "trigger-1",
+      "name": "30분 스케줄",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ftts.onrender.com/collect",
+        "options": {}
+      },
+      "id": "collect-1",
+      "name": "이벤트 수집",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ftts.onrender.com/process",
+        "options": {}
+      },
+      "id": "process-1",
+      "name": "나비효과 분석",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://ftts.onrender.com/signals",
+        "options": {}
+      },
+      "id": "signals-1",
+      "name": "신호 조회",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-executed",
+              "leftValue": "={{ $json.executed }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "cond-confidence",
+              "leftValue": "={{ $json.confidence }}",
+              "rightValue": 0.65,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "filter-1",
+      "name": "신규 신호 필터",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [880, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://discord.com/api/webhooks/1501777653638627359/Qbduw19oDjWs0kGE99eCNB4WGw7vDPDe7UknhI2d-49iGS-KQit4WMJ7UsIow3QfTF3S",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "=🦋 **나비효과 신호**\n📌 종목: {{ $json.company }} ({{ $json.ticker }})\n📊 방향: {{ $json.direction === 'BUY' ? '🟢 매수' : '🔴 매도' }}\n💯 신뢰도: {{ ($json.confidence * 100).toFixed(0) }}%"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "discord-1",
+      "name": "Discord 알림",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1100, 300]
+    }
+  ],
+  "connections": {
+    "30분 스케줄": {
+      "main": [
+        [{"node": "이벤트 수집", "type": "main", "index": 0}]
+      ]
+    },
+    "이벤트 수집": {
+      "main": [
+        [{"node": "나비효과 분석", "type": "main", "index": 0}]
+      ]
+    },
+    "나비효과 분석": {
+      "main": [
+        [{"node": "신호 조회", "type": "main", "index": 0}]
+      ]
+    },
+    "신호 조회": {
+      "main": [
+        [{"node": "신규 신호 필터", "type": "main", "index": 0}]
+      ]
+    },
+    "신규 신호 필터": {
+      "main": [
+        [{"node": "Discord 알림", "type": "main", "index": 0}]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
