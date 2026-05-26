@@ -2,21 +2,70 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from sqlalchemy import func
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+import httpx
+import logging
+
 from butterfly.db.manager import init_db, get_session
 from butterfly.db.models import Event, ButterflyChain, Signal, Trade
 from butterfly.sources.collector import collect_and_save
 from butterfly.engine.pipeline import process_pending
-import logging
+from butterfly import config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+scheduler = AsyncIOScheduler()
+
+
+async def run_pipeline():
+    logger.info("파이프라인 시작")
+    s = get_session()
+    try:
+        collected = collect_and_save(s)
+        logger.info("수집: %d건", collected)
+
+        processed = process_pending(s)
+        logger.info("분석: %d건", processed)
+
+        if processed > 0:
+            await notify_discord(s)
+    finally:
+        s.close()
+
+
+async def notify_discord(session):
+    signals = (
+        session.query(Signal)
+        .filter_by(executed=False)
+        .order_by(Signal.created_at.desc())
+        .limit(10)
+        .all()
+    )
+    if not signals or not config.DISCORD_WEBHOOK:
+        return
+
+    lines = ["🦋 **나비효과 신호**\n"]
+    for s in signals:
+        icon = "🟢" if s.direction == "BUY" else "🔴"
+        lines.append(f"{icon} {s.company_name}({s.ticker}) {s.direction} | 신뢰도 {s.confidence*100:.0f}%")
+
+    msg = "\n".join(lines)
+    try:
+        async with httpx.AsyncClient() as client:
+            await client.post(config.DISCORD_WEBHOOK, json={"content": msg}, timeout=5)
+    except Exception as e:
+        logger.error("Discord 전송 실패: %s", e)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
-    logger.info("나비효과 AI 시작")
+    scheduler.add_job(run_pipeline, "interval", minutes=30, id="pipeline")
+    scheduler.start()
+    logger.info("나비효과 AI 시작 - 30분 스케줄 활성화")
     yield
+    scheduler.shutdown()
 
 
 app = FastAPI(title="나비효과 AI", lifespan=lifespan)
@@ -40,17 +89,24 @@ def stats():
 
 
 @app.post("/collect")
-def collect():
+async def collect():
     s = get_session()
     n = collect_and_save(s)
     return {"collected": n}
 
 
 @app.post("/process")
-def process():
+async def process():
     s = get_session()
     n = process_pending(s)
     return {"processed": n}
+
+
+@app.post("/run")
+async def run_now():
+    """즉시 파이프라인 실행"""
+    await run_pipeline()
+    return {"status": "ok"}
 
 
 @app.get("/signals")
