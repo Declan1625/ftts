@@ -1,11 +1,13 @@
 """KIS 모의투자 전용 클라이언트"""
 from __future__ import annotations
 import logging
-import httpx
+import requests
+import urllib3
 from butterfly import config
 
-logger = logging.getLogger(__name__)
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+logger = logging.getLogger(__name__)
 BASE = "https://openapivts.koreainvestment.com:9443"
 
 
@@ -21,7 +23,7 @@ class KISPaperClient:
         self.token: str | None = None
 
     def authenticate(self):
-        r = httpx.post(f"{BASE}/oauth2/tokenP", json={
+        r = requests.post(f"{BASE}/oauth2/tokenP", json={
             "grant_type": "client_credentials",
             "appkey": self.app_key,
             "appsecret": self.app_secret,
@@ -42,7 +44,7 @@ class KISPaperClient:
         }
 
     def get_price(self, ticker: str) -> float:
-        r = httpx.get(f"{BASE}/uapi/domestic-stock/v1/quotations/inquire-price",
+        r = requests.get(f"{BASE}/uapi/domestic-stock/v1/quotations/inquire-price",
             headers=self._headers("FHKST01010100"),
             params={"fid_cond_mrkt_div_code": "J", "fid_input_iscd": ticker},
             timeout=10, verify=False)
@@ -55,7 +57,7 @@ class KISPaperClient:
 
     def buy(self, ticker: str, qty: int) -> str:
         cano, prdt = self.account_no.split("-")
-        r = httpx.post(f"{BASE}/uapi/domestic-stock/v1/trading/order-cash",
+        r = requests.post(f"{BASE}/uapi/domestic-stock/v1/trading/order-cash",
             headers=self._headers("VTTC0802U"),
             json={
                 "CANO": cano,
