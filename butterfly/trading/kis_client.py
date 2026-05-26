@@ -32,7 +32,7 @@ class KISPaperClient:
         self.token = data.get("access_token")
         if not self.token:
             raise KISError(f"토큰 발급 실패: {data}")
-        logger.info("KIS 모의투자 인증 성공")
+        logger.info(f"KIS 인증 성공: token_type={data.get('token_type')} expires={data.get('access_token_token_expired')}")
 
     def _headers(self, tr_id: str) -> dict:
         return {
