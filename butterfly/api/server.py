@@ -10,6 +10,7 @@ from butterfly.db.manager import init_db, get_session
 from butterfly.db.models import Event, ButterflyChain, Signal, Trade
 from butterfly.sources.collector import collect_and_save
 from butterfly.engine.pipeline import process_pending
+from butterfly.trading.paper_trader import execute_pending
 from butterfly import config
 
 logging.basicConfig(level=logging.INFO)
@@ -28,6 +29,9 @@ async def run_pipeline():
         processed = process_pending(s)
         logger.info("분석: %d건", processed)
 
+        traded = execute_pending(s)
+        logger.info("모의투자: %d건", traded)
+
         if processed > 0:
             await notify_discord(s)
     finally:
@@ -45,10 +49,11 @@ async def notify_discord(session):
     if not signals or not config.DISCORD_WEBHOOK:
         return
 
-    lines = ["🦋 **나비효과 신호**\n"]
+    lines = ["🦋 **나비효과 신호 & 모의투자 실행**\n"]
     for s in signals:
         icon = "🟢" if s.direction == "BUY" else "🔴"
-        lines.append(f"{icon} {s.company_name}({s.ticker}) {s.direction} | 신뢰도 {s.confidence*100:.0f}%")
+        trade_status = "✅ 주문완료" if s.executed else "⏳ 대기"
+        lines.append(f"{icon} {s.company_name}({s.ticker}) {s.direction} | 신뢰도 {s.confidence*100:.0f}% | {trade_status}")
 
     msg = "\n".join(lines)
     try:
