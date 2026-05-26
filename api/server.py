@@ -167,6 +167,9 @@ def analyze(req: AnalyzeRequest):
         # 그래프 DB 동기화
         processor.sync_graph_to_db()
 
+        # Decision DB 저장
+        _save_decisions(session, signals)
+
     summary = _build_discord_summary(
         title=req.title,
         url=req.url,
@@ -344,6 +347,23 @@ def stats():
 
 
 # ── 헬퍼 ─────────────────────────────────────────────────────────
+
+def _save_decisions(session, signals: list[SignalResult]) -> None:
+    from database.models import Company, Decision
+    for sig in signals:
+        company = session.query(Company).filter(Company.ticker == sig.ticker).first()
+        if not company:
+            continue
+        session.add(Decision(
+            company_id=company.id,
+            signal=sig.signal,
+            event_score=sig.score,
+            predicted_weight=min(1.0, abs(sig.score)),
+            confidence=sig.confidence,
+            logic_snapshot={"source": "analyze_endpoint"},
+        ))
+    session.commit()
+
 
 def _collect_signals(session, engine: WeightEngine, graph: CausalGraph) -> list[SignalResult]:
     """그래프 내 모든 company 노드에 대해 신호를 산출."""
