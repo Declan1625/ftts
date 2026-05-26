@@ -52,7 +52,7 @@ class KISPaperClient:
         if data.get("rt_cd") != "0":
             raise KISError(f"주가 조회 실패 [{ticker}]: {data.get('msg1')}")
         price = float(data["output"].get("stck_prpr", 0))
-        logger.info("주가 조회: %s = %,.0f원", ticker, price)
+        logger.info(f"주가 조회: {ticker} = {price:,.0f}원")
         return price
 
     def buy(self, ticker: str, qty: int) -> str:
