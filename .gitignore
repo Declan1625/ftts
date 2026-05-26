@@ -1,8 +1,7 @@
 venv/
-butterfly.db
 *.db
+*.sqlite
 .env
 __pycache__/
 *.pyc
 *.pyo
-__pycache__/

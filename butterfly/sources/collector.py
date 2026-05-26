@@ -3,10 +3,10 @@ from __future__ import annotations
 import logging
 from sqlalchemy.orm import Session
 from butterfly.db.models import Event
-from butterfly.sources import reuters, dart, fed, eia, bok, bls, moef
+from butterfly.sources import reuters, dart, fed, eia, bok, bls, moef, hankyung, mk, yna
 
 logger = logging.getLogger(__name__)
-SOURCES = [reuters, dart, fed, eia, bok, bls, moef]
+SOURCES = [reuters, dart, fed, eia, bok, bls, moef, hankyung, mk, yna]
 
 
 def collect_and_save(session: Session) -> int:

@@ -127,70 +127,121 @@ def health():
 @app.get("/stats")
 def stats():
     s = get_session()
-    return {
-        "events": s.query(func.count(Event.id)).scalar(),
-        "chains": s.query(func.count(ButterflyChain.id)).scalar(),
-        "signals": s.query(func.count(Signal.id)).scalar(),
-        "trades": s.query(func.count(Trade.id)).scalar(),
-        "pending_events": s.query(func.count(Event.id)).filter_by(processed=False).scalar(),
-    }
+    try:
+        return {
+            "events": s.query(func.count(Event.id)).scalar(),
+            "chains": s.query(func.count(ButterflyChain.id)).scalar(),
+            "signals": s.query(func.count(Signal.id)).scalar(),
+            "trades": s.query(func.count(Trade.id)).scalar(),
+            "pending_events": s.query(func.count(Event.id)).filter_by(processed=False).scalar(),
+            "patterns": s.query(func.count(CausalPattern.id)).scalar(),
+        }
+    finally:
+        s.close()
 
 
 @app.get("/portfolio")
 def portfolio():
     s = get_session()
-    p = s.query(Portfolio).first()
-    if not p:
+    try:
+        p = s.query(Portfolio).first()
+        if not p:
+            return {
+                "initial_cash": config.PAPER_INITIAL_CASH,
+                "cash": config.PAPER_INITIAL_CASH,
+                "invested": 0,
+                "current_value": config.PAPER_INITIAL_CASH,
+                "unrealized_pnl": 0,
+                "realized_pnl": 0,
+                "total_pnl_pct": 0,
+                "positions": [],
+            }
+
+        open_trades = s.query(Trade).filter_by(status="open").order_by(Trade.entered_at.desc()).all()
+        positions = []
+        invested = 0
+        current_val = 0
+
+        for t in open_trades:
+            entry_val = (t.price_at_entry or 0) * t.quantity
+            cur_val = (t.current_price or t.price_at_entry or 0) * t.quantity
+            invested += entry_val
+            current_val += cur_val
+            positions.append({
+                "id": t.id,
+                "ticker": t.ticker,
+                "company": t.company_name or t.ticker,
+                "risk_tier": t.risk_tier or "MEDIUM",
+                "qty": t.quantity,
+                "entry_price": t.price_at_entry,
+                "current_price": t.current_price or t.price_at_entry,
+                "target_price": t.target_price,
+                "stop_loss": t.stop_loss_price,
+                "pnl": t.pnl or 0,
+                "pnl_pct": t.pnl_pct or 0,
+                "status": t.status,
+            })
+
+        total_value = p.cash + current_val
+        unrealized = current_val - invested
+        total_pnl_pct = (total_value - p.initial_cash) / p.initial_cash * 100
+
         return {
-            "initial_cash": config.PAPER_INITIAL_CASH,
-            "cash": config.PAPER_INITIAL_CASH,
-            "invested": 0,
-            "current_value": config.PAPER_INITIAL_CASH,
-            "unrealized_pnl": 0,
-            "realized_pnl": 0,
-            "total_pnl_pct": 0,
-            "positions": [],
+            "initial_cash": p.initial_cash,
+            "cash": p.cash,
+            "invested": invested,
+            "current_value": total_value,
+            "unrealized_pnl": unrealized,
+            "realized_pnl": p.realized_pnl or 0,
+            "total_pnl_pct": total_pnl_pct,
+            "positions": positions,
         }
+    finally:
+        s.close()
 
-    open_trades = s.query(Trade).filter_by(status="open").order_by(Trade.entered_at.desc()).all()
-    positions = []
-    invested = 0
-    current_val = 0
 
-    for t in open_trades:
-        entry_val = (t.price_at_entry or 0) * t.quantity
-        cur_val = (t.current_price or t.price_at_entry or 0) * t.quantity
-        invested += entry_val
-        current_val += cur_val
-        positions.append({
-            "id": t.id,
-            "ticker": t.ticker,
-            "company": t.company_name or t.ticker,
-            "risk_tier": t.risk_tier or "MEDIUM",
-            "qty": t.quantity,
-            "entry_price": t.price_at_entry,
-            "current_price": t.current_price or t.price_at_entry,
-            "target_price": t.target_price,
-            "stop_loss": t.stop_loss_price,
-            "pnl": t.pnl or 0,
-            "pnl_pct": t.pnl_pct or 0,
-            "status": t.status,
-        })
+@app.get("/metrics")
+def metrics():
+    """성과 지표: 승률, MDD, Sharpe, 총 수익률"""
+    import math
+    s = get_session()
+    try:
+        closed = s.query(Trade).filter_by(status="closed").all()
+        if not closed:
+            return {"win_rate": 0, "total_trades": 0, "mdd": 0, "sharpe": 0, "total_return_pct": 0}
 
-    total_value = p.cash + current_val
-    unrealized = current_val - invested
-    total_pnl_pct = (total_value - p.initial_cash) / p.initial_cash * 100
+        wins = sum(1 for t in closed if t.pnl and t.pnl > 0)
+        win_rate = wins / len(closed) * 100
+        pnl_list = [t.pnl_pct or 0 for t in closed]
+        avg_pnl = sum(pnl_list) / len(pnl_list)
+        std_pnl = math.sqrt(sum((x - avg_pnl) ** 2 for x in pnl_list) / len(pnl_list)) if len(pnl_list) > 1 else 1
+        sharpe = avg_pnl / std_pnl if std_pnl else 0
 
-    return {
-        "initial_cash": p.initial_cash,
-        "cash": p.cash,
-        "invested": invested,
-        "current_value": total_value,
-        "unrealized_pnl": unrealized,
-        "realized_pnl": p.realized_pnl or 0,
-        "total_pnl_pct": total_pnl_pct,
-        "positions": positions,
-    }
+        # MDD: 누적 수익 곡선 기준
+        cumulative = 0
+        peak = 0
+        mdd = 0
+        for p in pnl_list:
+            cumulative += p
+            if cumulative > peak:
+                peak = cumulative
+            dd = peak - cumulative
+            if dd > mdd:
+                mdd = dd
+
+        p = s.query(Portfolio).first()
+        total_return = (p.realized_pnl / p.initial_cash * 100) if p and p.initial_cash else 0
+
+        return {
+            "total_trades": len(closed),
+            "win_rate": round(win_rate, 1),
+            "avg_pnl_pct": round(avg_pnl, 2),
+            "sharpe": round(sharpe, 2),
+            "mdd": round(mdd, 2),
+            "total_return_pct": round(total_return, 2),
+        }
+    finally:
+        s.close()
 
 
 @app.get("/run")
@@ -224,35 +275,44 @@ async def log_stream():
 @app.get("/signals")
 def signals(limit: int = 20):
     s = get_session()
-    rows = s.query(Signal).order_by(Signal.created_at.desc()).limit(limit).all()
-    return [{"id": r.id, "ticker": r.ticker, "company": r.company_name,
-             "direction": r.direction, "confidence": r.confidence,
-             "executed": r.executed} for r in rows]
+    try:
+        rows = s.query(Signal).order_by(Signal.created_at.desc()).limit(limit).all()
+        return [{"id": r.id, "ticker": r.ticker, "company": r.company_name,
+                 "direction": r.direction, "confidence": r.confidence,
+                 "executed": r.executed} for r in rows]
+    finally:
+        s.close()
 
 
 @app.get("/patterns")
 def patterns(limit: int = 20):
     s = get_session()
-    rows = (s.query(CausalPattern)
-            .order_by(CausalPattern.occurrence_count.desc())
-            .limit(limit).all())
-    return [{"id": r.id, "sectors": r.sector_key, "summary": r.trigger_summary,
-             "occurrences": r.occurrence_count, "accuracy": round(r.accuracy * 100, 1),
-             "avg_confidence": round(r.avg_confidence * 100, 1)} for r in rows]
+    try:
+        rows = (s.query(CausalPattern)
+                .order_by(CausalPattern.occurrence_count.desc())
+                .limit(limit).all())
+        return [{"id": r.id, "sectors": r.sector_key, "summary": r.trigger_summary,
+                 "occurrences": r.occurrence_count, "accuracy": round(r.accuracy * 100, 1),
+                 "avg_confidence": round(r.avg_confidence * 100, 1)} for r in rows]
+    finally:
+        s.close()
 
 
 @app.get("/chains/{chain_id}")
 def chain_detail(chain_id: int):
     import json
     s = get_session()
-    c = s.query(ButterflyChain).get(chain_id)
-    if not c:
-        return {"error": "not found"}
-    return {
-        "id": c.id,
-        "event": c.event.title,
-        "chain": json.loads(c.chain_json),
-        "signals": c.final_tickers,
-        "direction": c.direction,
-        "confidence": c.confidence,
-    }
+    try:
+        c = s.query(ButterflyChain).get(chain_id)
+        if not c:
+            return {"error": "not found"}
+        return {
+            "id": c.id,
+            "event": c.event.title,
+            "chain": json.loads(c.chain_json),
+            "signals": c.final_tickers,
+            "direction": c.direction,
+            "confidence": c.confidence,
+        }
+    finally:
+        s.close()

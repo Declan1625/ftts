@@ -1,6 +1,6 @@
 from __future__ import annotations
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, Float, DateTime, Text, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, DateTime, Text, Boolean, ForeignKey, Index
 from sqlalchemy.orm import DeclarativeBase, relationship
 
 
@@ -10,6 +10,10 @@ class Base(DeclarativeBase):
 
 class Event(Base):
     __tablename__ = "events"
+    __table_args__ = (
+        Index("ix_events_processed", "processed"),
+        Index("ix_events_source_title", "source", "title"),
+    )
 
     id = Column(Integer, primary_key=True)
     source = Column(String(50), nullable=False)
@@ -41,6 +45,9 @@ class ButterflyChain(Base):
 
 class Signal(Base):
     __tablename__ = "signals"
+    __table_args__ = (
+        Index("ix_signals_executed", "executed"),
+    )
 
     id = Column(Integer, primary_key=True)
     chain_id = Column(Integer, ForeignKey("butterfly_chains.id"), nullable=False)
@@ -58,6 +65,9 @@ class Signal(Base):
 
 class Trade(Base):
     __tablename__ = "trades"
+    __table_args__ = (
+        Index("ix_trades_status", "status"),
+    )
 
     id = Column(Integer, primary_key=True)
     signal_id = Column(Integer, ForeignKey("signals.id"), nullable=False)

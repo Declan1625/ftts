@@ -6,37 +6,71 @@ from sqlalchemy.orm import Session
 from butterfly.db.models import Event, ButterflyChain, Signal
 from butterfly.engine.analyzer import analyze
 from butterfly.engine.pattern_engine import find_pattern, save_pattern, pattern_to_result
+from butterfly.engine.event_scorer import score_event, quick_sectors
 from butterfly.config import BUY_CONFIDENCE_MIN
 
 logger = logging.getLogger(__name__)
 
-# 섹터 → 리스크 티어 분류
-_HIGH_SECTORS = {"바이오", "게임", "엔터", "스타트업", "제약", "코스닥", "중소형"}
-_STABLE_SECTORS = {"은행", "통신", "전력", "가스", "식품", "유통", "보험", "공기업"}
+# GICS 기반 섹터→티어 매핑
+_SECTOR_TIER: dict[str, str] = {
+    # HIGH (변동성 높음, 이벤트 드리븐)
+    "반도체": "HIGH", "DRAM": "HIGH", "HBM": "HIGH", "낸드": "HIGH", "파운드리": "HIGH",
+    "바이오": "HIGH", "제약": "HIGH", "임상": "HIGH", "신약": "HIGH",
+    "배터리": "HIGH", "2차전지": "HIGH", "리튬": "HIGH", "양극재": "HIGH",
+    "방산": "HIGH", "게임": "HIGH", "엔터": "HIGH",
+    # MEDIUM (경기순환)
+    "자동차": "MEDIUM", "전기차": "MEDIUM", "정유": "MEDIUM", "화학": "MEDIUM",
+    "철강": "MEDIUM", "건설": "MEDIUM", "조선": "MEDIUM", "해운": "MEDIUM",
+    "화장품": "MEDIUM", "IT": "MEDIUM", "소프트웨어": "MEDIUM",
+    # STABLE (방어주)
+    "은행": "STABLE", "금융": "STABLE", "보험": "STABLE",
+    "통신": "STABLE", "전력": "STABLE", "식품": "STABLE", "유통": "STABLE",
+    "공기업": "STABLE", "리츠": "STABLE",
+}
 
 
 def _classify_tier(sectors: list[str]) -> str:
     joined = " ".join(sectors)
-    if any(k in joined for k in _HIGH_SECTORS):
+    counts = {"HIGH": 0, "MEDIUM": 0, "STABLE": 0}
+    for kw, tier in _SECTOR_TIER.items():
+        if kw in joined:
+            counts[tier] += 1
+    if counts["HIGH"] > 0:
         return "HIGH"
-    if any(k in joined for k in _STABLE_SECTORS):
+    if counts["STABLE"] > counts["MEDIUM"]:
         return "STABLE"
     return "MEDIUM"
 
 
 def process_pending(session: Session) -> int:
     events = session.query(Event).filter_by(processed=False).all()
+    if not events:
+        return 0
+
+    # 중요도 순 정렬 (FOMC, 북한 등 먼저 처리)
+    events.sort(key=lambda e: score_event(e), reverse=True)
+
     processed = 0
+    claude_calls = 0
+    cache_hits = 0
 
     for event in events:
         try:
-            sectors_hint = []
             result = None
 
-            # ── 1. 기존 패턴 먼저 확인 (빠른 경로) ──────────────────
-            # 제목에서 간단한 키워드로 임시 섹터 추출은 생략,
-            # Claude 호출 후 저장된 패턴과 섹터 매칭으로 다음 사이클부터 재사용
-            result = analyze(event.title, event.body or "")
+            # ── 1. 패턴 캐시 먼저 시도 ──────────────────────────────
+            hint = quick_sectors(event.title)
+            if hint:
+                cached = find_pattern(session, hint)
+                if cached:
+                    result = pattern_to_result(cached)
+                    cache_hits += 1
+                    logger.info("🗂️  캐시 히트: %s (Claude 절약)", event.title[:40])
+
+            # ── 2. 캐시 미스 → Claude 호출 ───────────────────────────
+            if result is None:
+                result = analyze(event.title, event.body or "")
+                claude_calls += 1
 
             if not result:
                 event.processed = True
@@ -46,8 +80,8 @@ def process_pending(session: Session) -> int:
             signals = result.get("signals", [])
             sectors = result.get("affected_sectors", [])
 
-            # ── 2. 패턴 저장 (축적) ──────────────────────────────────
-            if signals and sectors:
+            # ── 3. 결과 패턴으로 저장 (지식 축적) ───────────────────
+            if signals and sectors and claude_calls > 0:
                 save_pattern(session, result)
 
             if not signals:
@@ -55,7 +89,6 @@ def process_pending(session: Session) -> int:
                 session.commit()
                 continue
 
-            # ── 3. 티어 분류 ─────────────────────────────────────────
             tier = _classify_tier(sectors)
 
             chain = ButterflyChain(
@@ -84,11 +117,11 @@ def process_pending(session: Session) -> int:
             event.processed = True
             session.commit()
             processed += 1
-            logger.info("처리: %s → 섹터:%s 티어:%s 신호:%d건",
-                        event.title[:40], ",".join(sectors[:2]), tier, added)
+            logger.info("처리: %s → 티어:%s 신호:%d건", event.title[:40], tier, added)
 
         except Exception as e:
             logger.error("처리 실패 [%d]: %s", event.id, e)
             session.rollback()
 
+    logger.info("파이프라인: Claude %d회 / 캐시 %d회 / 처리 %d건", claude_calls, cache_hits, processed)
     return processed
