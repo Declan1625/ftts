@@ -1,6 +1,6 @@
 from __future__ import annotations
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks
 from sqlalchemy import func
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import httpx
@@ -108,10 +108,10 @@ async def process():
 
 
 @app.post("/run")
-async def run_now():
-    """즉시 파이프라인 실행"""
-    await run_pipeline()
-    return {"status": "ok"}
+async def run_now(background_tasks: BackgroundTasks):
+    """즉시 파이프라인 실행 (백그라운드)"""
+    background_tasks.add_task(run_pipeline)
+    return {"status": "started", "message": "파이프라인 백그라운드 실행 중. /stats 로 확인하세요."}
 
 
 @app.get("/signals")
