@@ -68,6 +68,7 @@ class KISPaperClient:
                 "ORD_UNPR": str(price),
             }, timeout=10, verify=False)
         data = r.json()
+        logger.info(f"KIS 주문 응답: {data}")
         if data.get("rt_cd") != "0":
             raise KISError(f"매수 실패 [{ticker}]: {data.get('msg1')}")
         order_no = data.get("output", {}).get("ODNO", "")
