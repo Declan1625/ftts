@@ -1,12 +1,11 @@
-"""Fed(연준) 발표 RSS 수집기"""
+"""BBC Business RSS"""
 from __future__ import annotations
 import httpx
 import xml.etree.ElementTree as ET
 from email.utils import parsedate_to_datetime
 
 FEEDS = [
-    "https://www.federalreserve.gov/feeds/press_all.xml",
-    "https://www.federalreserve.gov/feeds/speeches.xml",
+    "https://feeds.bbci.co.uk/news/business/rss.xml",
 ]
 
 
@@ -15,9 +14,9 @@ def fetch() -> list[dict]:
     for url in FEEDS:
         try:
             r = httpx.get(url, timeout=10, follow_redirects=True,
-                          headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"})
+                          headers={"User-Agent": "Mozilla/5.0"})
             root = ET.fromstring(r.text)
-            for item in root.findall(".//item")[:5]:
+            for item in root.findall(".//item")[:10]:
                 title = item.findtext("title", "")
                 desc = item.findtext("description", "")
                 link = item.findtext("link", "")
@@ -28,13 +27,14 @@ def fetch() -> list[dict]:
                         published = parsedate_to_datetime(pub)
                     except Exception:
                         pass
-                items.append({
-                    "source": "fed",
-                    "title": title,
-                    "body": desc,
-                    "url": link,
-                    "published_at": published,
-                })
+                if title:
+                    items.append({
+                        "source": "bbc",
+                        "title": title,
+                        "body": desc,
+                        "url": link,
+                        "published_at": published,
+                    })
         except Exception:
             pass
     return items

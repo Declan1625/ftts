@@ -91,6 +91,11 @@ def run_simulation(session: Session) -> int:
     if dd.level != "GREEN":
         logger.warning("포트폴리오 경보: %s", dd.message)
 
+    if not _is_market_hours():
+        logger.info("장외 시간 — 가격 업데이트/신규 매수 스킵")
+        _log_summary(session, portfolio)
+        return 0
+
     kis = _kis()
 
     # ── 1. 오픈 포지션 현재가 업데이트 및 청산 체크 ─────────────────

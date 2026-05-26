@@ -72,7 +72,7 @@ def _emergency_close(session: Session, portfolio: Portfolio):
         t.status = "closed"
         t.price_at_exit = t.current_price or t.price_at_entry
         t.exited_at = datetime.now(timezone.utc)
-        proceeds = (t.current_price or t.price_at_entry or 0) * t.quantity
+        proceeds = (t.current_price or t.price_at_entry or 0) * t.quantity * (1 - 0.0025)
         portfolio.cash += proceeds
         portfolio.realized_pnl = (portfolio.realized_pnl or 0) + (t.pnl or 0)
     session.commit()

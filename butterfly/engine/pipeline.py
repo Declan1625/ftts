@@ -61,6 +61,7 @@ def process_pending(session: Session, max_per_cycle: int = 30) -> int:
     for event in events:
         try:
             result = None
+            used_cache = False
 
             # ── 1. 패턴 캐시 먼저 시도 ──────────────────────────────
             hint = quick_sectors(event.title)
@@ -68,6 +69,7 @@ def process_pending(session: Session, max_per_cycle: int = 30) -> int:
                 cached = find_pattern(session, hint)
                 if cached:
                     result = pattern_to_result(cached)
+                    used_cache = True
                     cache_hits += 1
                     logger.info("🗂️  캐시 히트: %s (Claude 절약)", event.title[:40])
 
@@ -85,7 +87,7 @@ def process_pending(session: Session, max_per_cycle: int = 30) -> int:
             sectors = result.get("affected_sectors", [])
 
             # ── 3. 결과 패턴으로 저장 (지식 축적) ───────────────────
-            if signals and sectors and claude_calls > 0:
+            if not used_cache and signals and sectors:
                 save_pattern(session, result)
 
             if not signals:

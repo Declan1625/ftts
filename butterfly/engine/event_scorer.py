@@ -15,7 +15,7 @@ _TIER2 = {
 }
 _SOURCE_W = {
     "fed": 1.0, "dart": 0.9, "bok": 0.8, "moef": 0.7,
-    "reuters": 0.7, "eia": 0.6, "bls": 0.6,
+    "bbc": 0.7, "eia": 0.6, "bls": 0.6,
     "hankyung": 0.7, "mk": 0.65, "yna": 0.65,
     "mer": 0.85,          # 메르 블로그: 검증된 인사이트
     "fred": 0.9,          # FRED: 공식 거시지표
@@ -41,7 +41,7 @@ QUICK_SECTOR_HINT = {
 
 def score_event(event: Event) -> float:
     text = f"{event.title} {event.body or ''}".lower()
-    src_w = _SOURCE_W.get(event.source, 0.5)
+    src_w = _SOURCE_W.get(event.source.lower(), 0.5)
     if any(k in text for k in _TIER1):
         kw_score = 1.0
     elif any(k in text for k in _TIER2):
@@ -57,6 +57,6 @@ def quick_sectors(title: str) -> list[str]:
     """Claude 호출 없이 제목에서 빠른 섹터 추출"""
     found = []
     for sector, keywords in QUICK_SECTOR_HINT.items():
-        if any(kw in title for kw in keywords):
+        if any(kw.lower() in title.lower() for kw in keywords):
             found.append(sector)
     return found
