@@ -50,15 +50,15 @@ async def run_pipeline():
     s = get_session()
     try:
         logger.info("📡 이벤트 수집 중...")
-        collected = collect_and_save(s)
+        collected = await asyncio.to_thread(collect_and_save, s)
         logger.info("✅ 수집 완료: %d건", collected)
 
         logger.info("🔍 나비효과 분석 중...")
-        processed = process_pending(s)
+        processed = await asyncio.to_thread(process_pending, s)
         logger.info("✅ 분석 완료: %d건", processed)
 
         logger.info("📈 모의투자 실행 중...")
-        traded = execute_pending(s)
+        traded = await asyncio.to_thread(execute_pending, s)
         logger.info("✅ 모의투자 완료: %d건", traded)
 
         if processed > 0:
