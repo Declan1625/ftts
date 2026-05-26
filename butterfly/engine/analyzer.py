@@ -40,7 +40,7 @@ def analyze(title: str, body: str) -> dict | None:
     try:
         resp = client.messages.create(
             model=ANTHROPIC_MODEL,
-            max_tokens=1500,
+            max_tokens=2048,
             system=SYSTEM_PROMPT,
             messages=[{"role": "user", "content": f"다음 사건의 나비효과를 분석하세요:\n\n{text}"}],
         )

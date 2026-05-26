@@ -8,9 +8,9 @@ ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
 ANTHROPIC_MODEL: str = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6")
 
 # KIS
-KIS_APP_KEY: str = os.getenv("KIS_APP_KEY", "")
-KIS_APP_SECRET: str = os.getenv("KIS_APP_SECRET", "")
-KIS_ACCOUNT: str = os.getenv("KIS_ACCOUNT", "")
+KIS_APP_KEY: str = os.getenv("KIS_APP_KEY_KR", "")
+KIS_APP_SECRET: str = os.getenv("KIS_APP_SECRET_KR", "")
+KIS_ACCOUNT: str = os.getenv("KIS_ACCOUNT_NO_KR", "")
 
 # Trading
 PAPER_INITIAL_CASH: float = float(os.getenv("PAPER_INITIAL_CASH", "10000000"))
