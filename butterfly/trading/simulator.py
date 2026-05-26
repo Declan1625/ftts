@@ -24,8 +24,7 @@ TIER = {
 }
 
 # 왕복 거래비용 추정 (증권거래세 + 수수료 + 슬리피지)
-ROUND_TRIP_COST = 0.005   # 약 0.5%
-BUY_COST = ROUND_TRIP_COST / 2  # 매수 시 절반
+BUY_COST = config.ROUND_TRIP_COST / 2  # 매수 시 절반
 
 
 def _portfolio(session: Session) -> Portfolio:
@@ -228,7 +227,7 @@ def _close(trade: Trade, price: float, is_correct: bool, portfolio: Portfolio):
     trade.is_correct = is_correct
     trade.exited_at = datetime.now(timezone.utc)
     # 매도 시 거래비용 차감
-    proceeds = price * trade.quantity * (1 - ROUND_TRIP_COST / 2)
+    proceeds = price * trade.quantity * (1 - config.ROUND_TRIP_COST / 2)
     portfolio.cash += proceeds
     portfolio.realized_pnl = (portfolio.realized_pnl or 0) + trade.pnl
 

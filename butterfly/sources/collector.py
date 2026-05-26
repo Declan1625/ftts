@@ -14,8 +14,15 @@ def collect_and_save(session: Session) -> int:
     for source in SOURCES:
         try:
             items = source.fetch()
+            if not items:
+                continue
+            src_name = items[0]["source"]
+            existing = {
+                title for (title,) in
+                session.query(Event.title).filter_by(source=src_name).all()
+            }
             for item in items:
-                if _exists(session, item["source"], item["title"]):
+                if item["title"] in existing:
                     continue
                 session.add(Event(**{k: v for k, v in item.items() if k != "ticker"}))
                 saved += 1
@@ -25,7 +32,3 @@ def collect_and_save(session: Session) -> int:
             session.rollback()
     logger.info("새 이벤트 %d건 저장", saved)
     return saved
-
-
-def _exists(session: Session, source: str, title: str) -> bool:
-    return session.query(Event).filter_by(source=source, title=title).first() is not None

@@ -9,6 +9,8 @@ from butterfly import config
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 logger = logging.getLogger(__name__)
+_SESSION = requests.Session()
+_SESSION.verify = False  # KIS 모의투자 서버 자체서명 인증서
 BASE = "https://openapivts.koreainvestment.com:9443"
 
 _TOKEN_CACHE: dict = {"token": None, "expires_at": None}
@@ -33,11 +35,11 @@ class KISPaperClient:
             self.token = _TOKEN_CACHE["token"]
             logger.info("KIS 토큰 캐시 사용 (만료: %s)", _TOKEN_CACHE["expires_at"].strftime("%H:%M"))
             return
-        r = requests.post(f"{BASE}/oauth2/tokenP", json={
+        r = _SESSION.post(f"{BASE}/oauth2/tokenP", json={
             "grant_type": "client_credentials",
             "appkey": self.app_key,
             "appsecret": self.app_secret,
-        }, timeout=10, verify=False)
+        }, timeout=10)
         data = r.json()
         self.token = data.get("access_token")
         if not self.token:
@@ -59,7 +61,7 @@ class KISPaperClient:
     def get_balance(self) -> dict:
         """모의투자 잔고 조회 - 계좌 유효성 확인용"""
         cano, prdt = self.account_no.split("-")
-        r = requests.get(f"{BASE}/uapi/domestic-stock/v1/trading/inquire-balance",
+        r = _SESSION.get(f"{BASE}/uapi/domestic-stock/v1/trading/inquire-balance",
             headers=self._headers("VTTC8434R"),
             params={
                 "CANO": cano,
@@ -73,16 +75,16 @@ class KISPaperClient:
                 "PRCS_DVSN": "00",
                 "CTX_AREA_FK100": "",
                 "CTX_AREA_NK100": "",
-            }, timeout=10, verify=False)
+            }, timeout=10)
         data = r.json()
         logger.info(f"KIS 잔고 조회: rt_cd={data.get('rt_cd')} msg={data.get('msg1')} msg_cd={data.get('msg_cd')}")
         return data
 
     def get_price(self, ticker: str) -> float:
-        r = requests.get(f"{BASE}/uapi/domestic-stock/v1/quotations/inquire-price",
+        r = _SESSION.get(f"{BASE}/uapi/domestic-stock/v1/quotations/inquire-price",
             headers=self._headers("FHKST01010100"),
             params={"fid_cond_mrkt_div_code": "J", "fid_input_iscd": ticker},
-            timeout=10, verify=False)
+            timeout=10)
         data = r.json()
         if data.get("rt_cd") != "0":
             raise KISError(f"주가 조회 실패 [{ticker}]: {data.get('msg1')}")
@@ -101,9 +103,9 @@ class KISPaperClient:
             "ORD_UNPR": str(price),
         }
         logger.info(f"KIS 주문 요청: CANO={cano} PRDT={prdt} {ticker} {qty}주 @{price}")
-        r = requests.post(f"{BASE}/uapi/domestic-stock/v1/trading/order-cash",
+        r = _SESSION.post(f"{BASE}/uapi/domestic-stock/v1/trading/order-cash",
             headers=self._headers("VTTC0802U"),
-            json=body, timeout=10, verify=False)
+            json=body, timeout=10)
         data = r.json()
         logger.info(f"KIS 주문 응답: {data}")
         if data.get("rt_cd") != "0":

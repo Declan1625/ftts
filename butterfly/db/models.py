@@ -29,6 +29,9 @@ class Event(Base):
 
 class ButterflyChain(Base):
     __tablename__ = "butterfly_chains"
+    __table_args__ = (
+        Index("ix_chains_event_id", "event_id"),
+    )
 
     id = Column(Integer, primary_key=True)
     event_id = Column(Integer, ForeignKey("events.id"), nullable=False)
