@@ -129,3 +129,48 @@ def analyze(title: str, body: str) -> dict | None:
             import time
             time.sleep(5)
     return None
+
+
+def analyze_batch(events_data: list[tuple[str, str]]) -> list[dict | None]:
+    """여러 이벤트를 Batch API로 한 번에 분석 — 50% 비용 절감"""
+    if not events_data:
+        return []
+    import time
+    requests_list = [
+        {
+            "custom_id": f"ev-{i}",
+            "params": {
+                "model": ANTHROPIC_MODEL,
+                "max_tokens": 1500,
+                "system": [{"type": "text", "text": SYSTEM_PROMPT,
+                             "cache_control": {"type": "ephemeral"}}],
+                "messages": [{"role": "user", "content":
+                               f"다음 사건의 나비효과를 분석하세요:\n\n{_prepare_input(t, b)}"}],
+            }
+        }
+        for i, (t, b) in enumerate(events_data)
+    ]
+    try:
+        batch = client.messages.batches.create(requests=requests_list)
+        logger.info("Batch API 제출: %d건 (id=%s)", len(events_data), batch.id)
+
+        deadline = time.time() + 300  # 5분 타임아웃
+        while time.time() < deadline:
+            batch = client.messages.batches.retrieve(batch.id)
+            if batch.processing_status == "ended":
+                break
+            time.sleep(10)
+        else:
+            logger.warning("Batch API 타임아웃 — 개별 분석으로 fallback")
+            return [analyze(t, b) for t, b in events_data]
+
+        results: list[dict | None] = [None] * len(events_data)
+        for item in client.messages.batches.results(batch.id):
+            idx = int(item.custom_id.split("-")[1])
+            if item.result.type == "succeeded":
+                raw = item.result.message.content[0].text.strip()
+                results[idx] = _extract_json(raw)
+        return results
+    except Exception as e:
+        logger.error("Batch API 실패 (%s) — 개별 분석으로 fallback", e)
+        return [analyze(t, b) for t, b in events_data]

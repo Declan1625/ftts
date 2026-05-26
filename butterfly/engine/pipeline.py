@@ -4,7 +4,7 @@ import json
 import logging
 from sqlalchemy.orm import Session
 from butterfly.db.models import Event, ButterflyChain, Signal
-from butterfly.engine.analyzer import analyze
+from butterfly.engine.analyzer import analyze, analyze_batch
 from butterfly.engine.pattern_engine import find_pattern, save_pattern, pattern_to_result
 from butterfly.engine.event_scorer import score_event, quick_sectors
 from butterfly.config import BUY_CONFIDENCE_MIN
@@ -49,34 +49,39 @@ def process_pending(session: Session, max_per_cycle: int = 30) -> int:
     if not events:
         return 0
 
-    # 중요도 순 정렬 후 한 사이클 최대 처리 수 제한
     events.sort(key=lambda e: score_event(e), reverse=True)
     events = events[:max_per_cycle]
     logger.info("미처리 이벤트 처리 시작: %d건 (최대 %d)", len(events), max_per_cycle)
 
-    processed = 0
-    claude_calls = 0
-    cache_hits = 0
+    # ── 1단계: 캐시 분류 ────────────────────────────────────────────
+    cache_results: dict[int, dict] = {}   # event.id → result
+    needs_claude: list[Event] = []
 
     for event in events:
+        hint = quick_sectors(event.title)
+        if hint:
+            cached = find_pattern(session, hint)
+            if cached:
+                cache_results[event.id] = pattern_to_result(cached)
+                logger.info("🗂️  캐시 히트: %s", event.title[:40])
+
+        if event.id not in cache_results:
+            needs_claude.append(event)
+
+    # ── 2단계: Batch API로 cache-miss 일괄 분석 ──────────────────────
+    claude_results: dict[int, dict | None] = {}
+    if needs_claude:
+        batch_out = analyze_batch([(e.title, e.body or "") for e in needs_claude])
+        for event, result in zip(needs_claude, batch_out):
+            claude_results[event.id] = result
+    logger.info("파이프라인: Batch %d건 / 캐시 %d건", len(needs_claude), len(cache_results))
+
+    # ── 3단계: 결과 처리 ─────────────────────────────────────────────
+    processed = 0
+    for event in events:
         try:
-            result = None
-            used_cache = False
-
-            # ── 1. 패턴 캐시 먼저 시도 ──────────────────────────────
-            hint = quick_sectors(event.title)
-            if hint:
-                cached = find_pattern(session, hint)
-                if cached:
-                    result = pattern_to_result(cached)
-                    used_cache = True
-                    cache_hits += 1
-                    logger.info("🗂️  캐시 히트: %s (Claude 절약)", event.title[:40])
-
-            # ── 2. 캐시 미스 → Claude 호출 ───────────────────────────
-            if result is None:
-                result = analyze(event.title, event.body or "")
-                claude_calls += 1
+            used_cache = event.id in cache_results
+            result = cache_results.get(event.id) or claude_results.get(event.id)
 
             if not result:
                 event.processed = True
@@ -86,7 +91,6 @@ def process_pending(session: Session, max_per_cycle: int = 30) -> int:
             signals = result.get("signals", [])
             sectors = result.get("affected_sectors", [])
 
-            # ── 3. 결과 패턴으로 저장 (지식 축적) ───────────────────
             if not used_cache and signals and sectors:
                 save_pattern(session, result)
 
@@ -129,5 +133,4 @@ def process_pending(session: Session, max_per_cycle: int = 30) -> int:
             logger.error("처리 실패 [%d]: %s", event.id, e)
             session.rollback()
 
-    logger.info("파이프라인: Claude %d회 / 캐시 %d회 / 처리 %d건", claude_calls, cache_hits, processed)
     return processed
