@@ -19,4 +19,5 @@ POSITION_SIZE_RATIO: float = float(os.getenv("POSITION_SIZE_RATIO", "0.1"))  # í
 
 # Sources
 DART_API_KEY: str = os.getenv("DART_API_KEY", "")
+FRED_API_KEY: str = os.getenv("FRED_API_KEY", "")
 DISCORD_WEBHOOK: str = os.getenv("DISCORD_WEBHOOK_URL") or os.getenv("DISCORD_WEBHOOK", "")
