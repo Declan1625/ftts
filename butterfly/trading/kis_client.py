@@ -57,16 +57,18 @@ class KISPaperClient:
 
     def buy(self, ticker: str, qty: int, price: int) -> str:
         cano, prdt = self.account_no.split("-")
+        body = {
+            "CANO": cano,
+            "ACNT_PRDT_CD": prdt,
+            "PDNO": ticker,
+            "ORD_DVSN": "00",
+            "ORD_QTY": str(qty),
+            "ORD_UNPR": str(price),
+        }
+        logger.info(f"KIS 주문 요청: CANO={cano} PRDT={prdt} {ticker} {qty}주 @{price}")
         r = requests.post(f"{BASE}/uapi/domestic-stock/v1/trading/order-cash",
             headers=self._headers("VTTC0802U"),
-            json={
-                "CANO": cano,
-                "ACNT_PRDT_CD": prdt,
-                "PDNO": ticker,
-                "ORD_DVSN": "00",
-                "ORD_QTY": str(qty),
-                "ORD_UNPR": str(price),
-            }, timeout=10, verify=False)
+            json=body, timeout=10, verify=False)
         data = r.json()
         logger.info(f"KIS 주문 응답: {data}")
         if data.get("rt_cd") != "0":
