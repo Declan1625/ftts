@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🦋 나비효과 AI</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #e6edf3; font-family: -apple-system, sans-serif; padding: 16px; }
+  h1 { font-size: 1.4rem; margin-bottom: 16px; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; }
+  .card .label { font-size: 0.75rem; color: #8b949e; margin-bottom: 4px; }
+  .card .value { font-size: 1.8rem; font-weight: bold; }
+  .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+  .btn-run { background: #238636; color: white; }
+  .btn-run:disabled { background: #1a3a24; color: #555; }
+  .btn-refresh { background: #1f6feb; color: white; }
+  .signal { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+  .signal .ticker { font-weight: bold; font-size: 1rem; }
+  .signal .meta { font-size: 0.8rem; color: #8b949e; margin-top: 4px; }
+  .buy { border-left: 3px solid #3fb950; }
+  .sell { border-left: 3px solid #f85149; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+  .badge-buy { background: #1a3a24; color: #3fb950; }
+  .badge-sell { background: #3a1a1a; color: #f85149; }
+  .badge-done { background: #1a2a3a; color: #58a6ff; }
+  .status { text-align: center; font-size: 0.85rem; color: #8b949e; margin: 8px 0; min-height: 20px; }
+  .section-title { font-size: 0.9rem; color: #8b949e; margin: 16px 0 8px; }
+  .conf-bar { height: 4px; background: #30363d; border-radius: 2px; margin-top: 6px; }
+  .conf-fill { height: 100%; border-radius: 2px; background: #3fb950; }
+</style>
+</head>
+<body>
+<h1>🦋 나비효과 AI</h1>
+
+<div class="grid" id="stats">
+  <div class="card"><div class="label">이벤트</div><div class="value" id="s-events">-</div></div>
+  <div class="card"><div class="label">체인</div><div class="value" id="s-chains">-</div></div>
+  <div class="card"><div class="label">신호</div><div class="value" id="s-signals">-</div></div>
+  <div class="card"><div class="label">모의투자</div><div class="value" id="s-trades">-</div></div>
+</div>
+
+<button class="btn btn-run" id="btn-run" onclick="runPipeline()">▶ 파이프라인 실행</button>
+<button class="btn btn-refresh" onclick="loadAll()">↻ 새로고침</button>
+<div class="status" id="status"></div>
+
+<div class="section-title">최근 신호</div>
+<div id="signals-list"></div>
+
+<script>
+const BASE = '';
+
+async function loadStats() {
+  const r = await fetch(BASE + '/stats');
+  const d = await r.json();
+  document.getElementById('s-events').textContent = d.events;
+  document.getElementById('s-chains').textContent = d.chains;
+  document.getElementById('s-signals').textContent = d.signals;
+  document.getElementById('s-trades').textContent = d.trades;
+}
+
+async function loadSignals() {
+  const r = await fetch(BASE + '/signals?limit=20');
+  const list = await r.json();
+  const el = document.getElementById('signals-list');
+  if (!list.length) { el.innerHTML = '<div class="status">신호 없음</div>'; return; }
+  el.innerHTML = list.map(s => `
+    <div class="signal ${s.direction === 'BUY' ? 'buy' : 'sell'}">
+      <div class="ticker">
+        ${s.company || s.ticker} <span style="color:#8b949e;font-size:0.8rem">${s.ticker}</span>
+        <span class="badge ${s.direction === 'BUY' ? 'badge-buy' : 'badge-sell'}" style="float:right">${s.direction}</span>
+        ${s.executed ? '<span class="badge badge-done" style="float:right;margin-right:6px">주문완료</span>' : ''}
+      </div>
+      <div class="conf-bar"><div class="conf-fill" style="width:${(s.confidence*100).toFixed(0)}%"></div></div>
+      <div class="meta">신뢰도 ${(s.confidence*100).toFixed(0)}%</div>
+    </div>
+  `).join('');
+}
+
+async function runPipeline() {
+  const btn = document.getElementById('btn-run');
+  btn.disabled = true;
+  btn.textContent = '실행 중...';
+  setStatus('파이프라인 시작 중...');
+  try {
+    await fetch(BASE + '/run');
+    setStatus('✅ 실행됨 - 2~3분 후 새로고침하세요');
+    setTimeout(loadAll, 5000);
+  } catch(e) {
+    setStatus('❌ 오류: ' + e.message);
+  }
+  setTimeout(() => { btn.disabled = false; btn.textContent = '▶ 파이프라인 실행'; }, 3000);
+}
+
+function setStatus(msg) {
+  document.getElementById('status').textContent = msg;
+}
+
+async function loadAll() {
+  setStatus('로딩 중...');
+  await Promise.all([loadStats(), loadSignals()]);
+  setStatus('마지막 업데이트: ' + new Date().toLocaleTimeString('ko-KR'));
+}
+
+loadAll();
+setInterval(loadAll, 60000);
+</script>
+</body>
+</html>

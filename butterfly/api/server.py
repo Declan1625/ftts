@@ -2,6 +2,8 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+from pathlib import Path
 from sqlalchemy import func
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import httpx
@@ -81,6 +83,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/", response_class=HTMLResponse)
+def dashboard():
+    html = Path(__file__).parent / "dashboard.html"
+    return html.read_text(encoding="utf-8")
 
 
 @app.get("/health")
