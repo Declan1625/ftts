@@ -298,6 +298,34 @@ def patterns(limit: int = 20):
         s.close()
 
 
+@app.get("/chains")
+def chains_list(limit: int = 20):
+    import json as _j
+    s = get_session()
+    try:
+        rows = (s.query(ButterflyChain)
+                .order_by(ButterflyChain.created_at.desc())
+                .limit(limit).all())
+        result = []
+        for c in rows:
+            try:
+                chain_data = _j.loads(c.chain_json)
+            except Exception:
+                chain_data = {}
+            result.append({
+                "id": c.id,
+                "event": c.event.title if c.event else "",
+                "event_source": c.event.source if c.event else "",
+                "direction": c.direction,
+                "confidence": c.confidence,
+                "chain": chain_data,
+                "created_at": c.created_at.isoformat() if c.created_at else None,
+            })
+        return result
+    finally:
+        s.close()
+
+
 @app.get("/chains/{chain_id}")
 def chain_detail(chain_id: int):
     import json
