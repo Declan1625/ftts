@@ -330,3 +330,111 @@ class TestPipeline:
         db.commit()
         process_pending(db)
         assert call_count["n"] == second_calls  # 3차는 캐시 히트
+
+    def test_signal_has_pattern_id(self, db, monkeypatch):
+        from butterfly.engine import analyzer
+        from butterfly.engine.pipeline import process_pending
+        mock_result = {
+            "summary": "테스트", "chain": [],
+            "affected_sectors": ["반도체"],
+            "signals": [{"ticker": "000660", "name": "SK하이닉스",
+                         "direction": "BUY", "confidence": 0.8, "reason": "t"}],
+        }
+        monkeypatch.setattr(analyzer, "analyze_batch", lambda evs: [mock_result] * len(evs))
+        db.add(Event(source="fed", title="HBM 이벤트", processed=False))
+        db.commit()
+        process_pending(db)
+        sig = db.query(Signal).first()
+        assert sig is not None
+        assert sig.pattern_id is not None
+
+
+# ── 6. 최대 보유기간 + 피드백 루프 ────────────────────────────────────────────
+
+class TestHoldingPeriodAndFeedback:
+    @pytest.fixture(autouse=True)
+    def mock_market(self, monkeypatch):
+        import butterfly.trading.simulator as sim
+        self._prices = {}
+        monkeypatch.setattr(sim, "_is_market_hours", lambda: True)
+        monkeypatch.setattr(sim, "_kis", lambda: self)
+
+    def get_price(self, ticker):
+        return self._prices.get(ticker, 75_000.0)
+
+    def test_max_holding_days_force_close(self, seeded_db, monkeypatch):
+        import butterfly.trading.simulator as sim
+        from butterfly import config
+        from datetime import timedelta
+        db, e, bc = seeded_db
+        self._prices["000660"] = 80_000
+        db.add(Portfolio(cash=10_000_000, initial_cash=10_000_000, realized_pnl=0))
+        sig = Signal(chain_id=bc.id, ticker="000660", direction="BUY",
+                     confidence=0.8, risk_tier="HIGH", executed=False)
+        db.add(sig); db.commit()
+        sim.run_simulation(db)
+        t = db.query(Trade).first()
+        assert t.status == "open"
+
+        # 보유기간 초과 시뮬레이션
+        monkeypatch.setattr(config, "MAX_HOLDING_DAYS", 0)
+        sim.run_simulation(db)
+        db.refresh(t)
+        assert t.status == "closed"
+
+    def test_sell_signal_is_correct_based_on_pnl(self, seeded_db):
+        import butterfly.trading.simulator as sim
+        db, e, bc = seeded_db
+        self._prices["000660"] = 75_000
+        db.add(Portfolio(cash=10_000_000, initial_cash=10_000_000, realized_pnl=0))
+        buy_sig = Signal(chain_id=bc.id, ticker="000660", direction="BUY",
+                         confidence=0.8, risk_tier="HIGH", executed=False)
+        db.add(buy_sig); db.commit()
+        sim.run_simulation(db)
+
+        # 손실 상태에서 SELL 신호 → is_correct=False
+        self._prices["000660"] = 60_000
+        sell_sig = Signal(chain_id=bc.id, ticker="000660", direction="SELL",
+                          confidence=0.7, risk_tier="HIGH", executed=False)
+        db.add(sell_sig); db.commit()
+        sim.run_simulation(db)
+        t = db.query(Trade).filter_by(ticker="000660").first()
+        db.refresh(t)
+        assert t.status == "closed"
+        assert t.is_correct is False  # 손실 청산 → incorrect
+
+    def test_feedback_loop_updates_pattern_accuracy(self, db, monkeypatch):
+        from butterfly.engine import analyzer
+        from butterfly.engine.pipeline import process_pending
+        import butterfly.trading.simulator as sim
+        mock_result = {
+            "summary": "테스트", "chain": [],
+            "affected_sectors": ["반도체"],
+            "signals": [{"ticker": "000660", "name": "SK하이닉스",
+                         "direction": "BUY", "confidence": 0.8, "reason": "t"}],
+        }
+        monkeypatch.setattr(analyzer, "analyze_batch", lambda evs: [mock_result] * len(evs))
+        db.add(Event(source="fed", title="HBM 이벤트", processed=False))
+        db.commit()
+        process_pending(db)
+
+        sig = db.query(Signal).first()
+        assert sig.pattern_id is not None
+
+        # 트레이드 강제 생성 및 청산
+        e = db.query(Event).first()
+        bc = db.query(ButterflyChain).first()
+        db.add(Portfolio(cash=10_000_000, initial_cash=10_000_000, realized_pnl=0))
+        t = Trade(signal_id=sig.id, ticker="000660", direction="BUY",
+                  risk_tier="HIGH", quantity=10, price_at_entry=75_000,
+                  current_price=80_000, pnl=50_000, pnl_pct=6.7, status="open")
+        db.add(t); db.commit()
+
+        portfolio = db.query(Portfolio).first()
+        from butterfly.trading.simulator import _close
+        _close(t, 80_000, True, portfolio, db)
+        db.commit()
+
+        pattern = db.query(CausalPattern).filter_by(id=sig.pattern_id).first()
+        assert pattern.correct_count == 1
+        assert pattern.accuracy > 0

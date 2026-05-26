@@ -94,7 +94,7 @@ def save_pattern(session: Session, result: dict) -> CausalPattern:
 
 def update_accuracy(session: Session, pattern_id: int, was_correct: bool):
     """거래 결과로 패턴 정확도 업데이트"""
-    p = session.query(CausalPattern).get(pattern_id)
+    p = session.get(CausalPattern, pattern_id)
     if not p:
         return
     if was_correct:

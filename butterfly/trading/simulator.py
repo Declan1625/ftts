@@ -107,11 +107,20 @@ def run_simulation(session: Session) -> int:
         t.pnl = (price - t.price_at_entry) * t.quantity
         t.pnl_pct = (price - t.price_at_entry) / t.price_at_entry * 100
 
+        # 최대 보유기간 초과 강제 청산
+        if t.entered_at:
+            entered = t.entered_at.replace(tzinfo=None) if t.entered_at.tzinfo else t.entered_at
+            days_held = (datetime.now(timezone.utc).replace(tzinfo=None) - entered).days
+            if days_held >= config.MAX_HOLDING_DAYS:
+                _close(t, price, t.pnl >= 0, portfolio, session)
+                logger.info("⏰ 기간초과 청산: %s (%d일) %.1f%%", t.ticker, days_held, t.pnl_pct)
+                continue
+
         if t.target_price and price >= t.target_price:
-            _close(t, price, True, portfolio)
+            _close(t, price, True, portfolio, session)
             logger.info("🎯 목표 청산: %s +%.1f%% (+%,.0f원)", t.ticker, t.pnl_pct, t.pnl)
         elif t.stop_loss_price and price <= t.stop_loss_price:
-            _close(t, price, False, portfolio)
+            _close(t, price, False, portfolio, session)
             logger.info("🛑 손절 청산: %s %.1f%% (%,.0f원)", t.ticker, t.pnl_pct, t.pnl)
 
     session.commit()
@@ -126,7 +135,8 @@ def run_simulation(session: Session) -> int:
             if open_trade:
                 price = _price(kis, open_trade.ticker)
                 if price:
-                    _close(open_trade, price, True, portfolio)
+                    open_trade.pnl = (price - open_trade.price_at_entry) * open_trade.quantity
+                    _close(open_trade, price, open_trade.pnl >= 0, portfolio, session)
                     logger.info("📉 SELL신호 청산: %s @%,.0f원", open_trade.ticker, price)
             sig.executed = True
             continue
@@ -221,15 +231,21 @@ def run_simulation(session: Session) -> int:
     return executed
 
 
-def _close(trade: Trade, price: float, is_correct: bool, portfolio: Portfolio):
+def _close(trade: Trade, price: float, is_correct: bool, portfolio: Portfolio, session: Session):
     trade.status = "closed"
     trade.price_at_exit = price
     trade.is_correct = is_correct
     trade.exited_at = datetime.now(timezone.utc)
-    # 매도 시 거래비용 차감
     proceeds = price * trade.quantity * (1 - config.ROUND_TRIP_COST / 2)
     portfolio.cash += proceeds
     portfolio.realized_pnl = (portfolio.realized_pnl or 0) + trade.pnl
+    # 피드백 루프: 패턴 정확도 업데이트
+    try:
+        if trade.signal and trade.signal.pattern_id:
+            from butterfly.engine.pattern_engine import update_accuracy
+            update_accuracy(session, trade.signal.pattern_id, is_correct)
+    except Exception:
+        pass
 
 
 def _log_summary(session: Session, portfolio: Portfolio):

@@ -23,3 +23,4 @@ FRED_API_KEY: str = os.getenv("FRED_API_KEY", "")
 DISCORD_WEBHOOK: str = os.getenv("DISCORD_WEBHOOK_URL") or os.getenv("DISCORD_WEBHOOK", "")
 
 ROUND_TRIP_COST: float = float(os.getenv("ROUND_TRIP_COST", "0.005"))
+MAX_HOLDING_DAYS: int = int(os.getenv("MAX_HOLDING_DAYS", "28"))  # ~20 trading days

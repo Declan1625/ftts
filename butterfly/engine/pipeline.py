@@ -54,7 +54,8 @@ def process_pending(session: Session, max_per_cycle: int = 30) -> int:
     logger.info("미처리 이벤트 처리 시작: %d건 (최대 %d)", len(events), max_per_cycle)
 
     # ── 1단계: 캐시 분류 ────────────────────────────────────────────
-    cache_results: dict[int, dict] = {}   # event.id → result
+    cache_results: dict[int, dict] = {}      # event.id → result
+    cache_pattern_ids: dict[int, int] = {}   # event.id → pattern.id
     needs_claude: list[Event] = []
 
     for event in events:
@@ -63,6 +64,7 @@ def process_pending(session: Session, max_per_cycle: int = 30) -> int:
             cached = find_pattern(session, hint)
             if cached:
                 cache_results[event.id] = pattern_to_result(cached)
+                cache_pattern_ids[event.id] = cached.id
                 logger.info("🗂️  캐시 히트: %s", event.title[:40])
 
         if event.id not in cache_results:
@@ -91,8 +93,10 @@ def process_pending(session: Session, max_per_cycle: int = 30) -> int:
             signals = result.get("signals", [])
             sectors = result.get("affected_sectors", [])
 
+            pattern_id: int | None = cache_pattern_ids.get(event.id)
             if not used_cache and signals and sectors:
-                save_pattern(session, result)
+                saved = save_pattern(session, result)
+                pattern_id = saved.id
 
             if not signals:
                 event.processed = True
@@ -116,6 +120,7 @@ def process_pending(session: Session, max_per_cycle: int = 30) -> int:
                 if s["confidence"] >= BUY_CONFIDENCE_MIN:
                     session.add(Signal(
                         chain_id=chain.id,
+                        pattern_id=pattern_id,
                         ticker=s["ticker"],
                         company_name=s.get("name", ""),
                         direction=s["direction"],

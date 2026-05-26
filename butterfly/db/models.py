@@ -54,6 +54,7 @@ class Signal(Base):
 
     id = Column(Integer, primary_key=True)
     chain_id = Column(Integer, ForeignKey("butterfly_chains.id"), nullable=False)
+    pattern_id = Column(Integer, ForeignKey("causal_patterns.id"), nullable=True)
     ticker = Column(String(20), nullable=False)
     company_name = Column(String(100))
     direction = Column(String(10), nullable=False)
