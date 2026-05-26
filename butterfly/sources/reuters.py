@@ -1,7 +1,7 @@
 """Reuters RSS 수집기"""
 from __future__ import annotations
-import feedparser
 import httpx
+import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 
@@ -16,19 +16,25 @@ def fetch() -> list[dict]:
     items = []
     for url in FEEDS:
         try:
-            feed = feedparser.parse(url)
-            for e in feed.entries[:10]:
+            r = httpx.get(url, timeout=10, follow_redirects=True)
+            root = ET.fromstring(r.text)
+            ns = {"dc": "http://purl.org/dc/elements/1.1/"}
+            for item in root.findall(".//item")[:10]:
+                title = item.findtext("title", "")
+                desc = item.findtext("description", "")
+                link = item.findtext("link", "")
+                pub = item.findtext("pubDate", "")
                 published = None
-                if hasattr(e, "published"):
+                if pub:
                     try:
-                        published = parsedate_to_datetime(e.published)
+                        published = parsedate_to_datetime(pub)
                     except Exception:
                         pass
                 items.append({
                     "source": "reuters",
-                    "title": e.get("title", ""),
-                    "body": e.get("summary", ""),
-                    "url": e.get("link", ""),
+                    "title": title,
+                    "body": desc,
+                    "url": link,
                     "published_at": published,
                 })
         except Exception:

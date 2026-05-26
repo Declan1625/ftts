@@ -1,6 +1,7 @@
 """Fed(연준) 발표 RSS 수집기"""
 from __future__ import annotations
-import feedparser
+import httpx
+import xml.etree.ElementTree as ET
 from email.utils import parsedate_to_datetime
 
 FEEDS = [
@@ -13,19 +14,24 @@ def fetch() -> list[dict]:
     items = []
     for url in FEEDS:
         try:
-            feed = feedparser.parse(url)
-            for e in feed.entries[:5]:
+            r = httpx.get(url, timeout=10, follow_redirects=True)
+            root = ET.fromstring(r.text)
+            for item in root.findall(".//item")[:5]:
+                title = item.findtext("title", "")
+                desc = item.findtext("description", "")
+                link = item.findtext("link", "")
+                pub = item.findtext("pubDate", "")
                 published = None
-                if hasattr(e, "published"):
+                if pub:
                     try:
-                        published = parsedate_to_datetime(e.published)
+                        published = parsedate_to_datetime(pub)
                     except Exception:
                         pass
                 items.append({
                     "source": "fed",
-                    "title": e.get("title", ""),
-                    "body": e.get("summary", ""),
-                    "url": e.get("link", ""),
+                    "title": title,
+                    "body": desc,
+                    "url": link,
                     "published_at": published,
                 })
         except Exception:
