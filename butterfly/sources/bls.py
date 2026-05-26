@@ -13,7 +13,8 @@ def fetch() -> list[dict]:
     items = []
     for url in FEEDS:
         try:
-            r = httpx.get(url, timeout=10, follow_redirects=True)
+            r = httpx.get(url, timeout=10, follow_redirects=True,
+                          headers={"User-Agent": "Mozilla/5.0"})
             root = ET.fromstring(r.text)
             for item in root.findall(".//item")[:10]:
                 title = item.findtext("title", "")

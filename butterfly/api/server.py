@@ -76,7 +76,7 @@ async def notify_discord(session):
         .limit(10)
         .all()
     )
-    if not signals or not config.DISCORD_WEBHOOK:
+    if not signals or not config.DISCORD_WEBHOOK or not config.DISCORD_WEBHOOK.startswith("http"):
         return
 
     lines = ["🦋 **나비효과 신호 & 모의투자 실행**\n"]

@@ -25,7 +25,7 @@ class KISPaperClient:
             "grant_type": "client_credentials",
             "appkey": self.app_key,
             "appsecret": self.app_secret,
-        }, timeout=10)
+        }, timeout=10, verify=False)
         data = r.json()
         self.token = data.get("access_token")
         if not self.token:
@@ -45,7 +45,7 @@ class KISPaperClient:
         r = httpx.get(f"{BASE}/uapi/domestic-stock/v1/quotations/inquire-price",
             headers=self._headers("FHKST01010100"),
             params={"fid_cond_mrkt_div_code": "J", "fid_input_iscd": ticker},
-            timeout=10)
+            timeout=10, verify=False)
         data = r.json()
         if data.get("rt_cd") != "0":
             raise KISError(f"주가 조회 실패 [{ticker}]: {data.get('msg1')}")
@@ -64,7 +64,7 @@ class KISPaperClient:
                 "ORD_DVSN": "01",
                 "ORD_QTY": str(qty),
                 "ORD_UNPR": "0",
-            }, timeout=10)
+            }, timeout=10, verify=False)
         data = r.json()
         if data.get("rt_cd") != "0":
             raise KISError(f"매수 실패 [{ticker}]: {data.get('msg1')}")

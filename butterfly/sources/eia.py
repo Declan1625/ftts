@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 from email.utils import parsedate_to_datetime
 
 FEEDS = [
-    "https://www.eia.gov/rss/press_releases.xml",
+    "https://www.eia.gov/pressroom/rss/pressreleases.xml",
 ]
 
 
