@@ -19,6 +19,7 @@ def execute_pending(session: Session) -> int:
     try:
         kis = KISPaperClient()
         kis.authenticate()
+        kis.get_balance()  # 계좌 유효성 + 잔고 확인
     except Exception as e:
         logger.error("KIS 인증 실패: %s", e)
         return 0

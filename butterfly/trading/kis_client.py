@@ -43,6 +43,28 @@ class KISPaperClient:
             "Content-Type": "application/json",
         }
 
+    def get_balance(self) -> dict:
+        """모의투자 잔고 조회 - 계좌 유효성 확인용"""
+        cano, prdt = self.account_no.split("-")
+        r = requests.get(f"{BASE}/uapi/domestic-stock/v1/trading/inquire-balance",
+            headers=self._headers("VTTC8434R"),
+            params={
+                "CANO": cano,
+                "ACNT_PRDT_CD": prdt,
+                "AFHR_FLPR_YN": "N",
+                "OFL_YN": "N",
+                "INQR_DVSN": "02",
+                "UNPR_DVSN": "01",
+                "FUND_STTL_ICLD_YN": "N",
+                "FNCG_AMT_AUTO_RDPT_YN": "N",
+                "PRCS_DVSN": "00",
+                "CTX_AREA_FK100": "",
+                "CTX_AREA_NK100": "",
+            }, timeout=10, verify=False)
+        data = r.json()
+        logger.info(f"KIS 잔고 조회: rt_cd={data.get('rt_cd')} msg={data.get('msg1')} msg_cd={data.get('msg_cd')}")
+        return data
+
     def get_price(self, ticker: str) -> float:
         r = requests.get(f"{BASE}/uapi/domestic-stock/v1/quotations/inquire-price",
             headers=self._headers("FHKST01010100"),
