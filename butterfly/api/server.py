@@ -114,7 +114,7 @@ async def process():
     return {"processed": n}
 
 
-@app.post("/run")
+@app.get("/run")
 async def run_now(background_tasks: BackgroundTasks):
     """즉시 파이프라인 실행 (백그라운드)"""
     background_tasks.add_task(run_pipeline)
