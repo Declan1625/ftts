@@ -26,14 +26,15 @@ def fetch() -> list[dict]:
         if data.get("status") != "000":
             return []
         items = []
-        for doc in data.get("list", []):
-            report_nm = doc.get("report_nm", "")
-            if not any(k in report_nm for k in IMPORTANT_REPORTS):
-                continue
+        matched = [
+            doc for doc in data.get("list", [])
+            if any(k in doc.get("report_nm", "") for k in IMPORTANT_REPORTS)
+        ]
+        for doc in matched[:5]:
             body = _fetch_body(doc.get("rcept_no", ""))
             items.append({
                 "source": "dart",
-                "title": f"[{doc['corp_name']}] {report_nm}",
+                "title": f"[{doc['corp_name']}] {doc.get('report_nm', '')}",
                 "body": body,
                 "url": f"https://dart.fss.or.kr/dsaf001/main.do?rcpNo={doc['rcept_no']}",
                 "published_at": _parse_date(doc.get("rcept_dt", "")),

@@ -3,12 +3,15 @@ from __future__ import annotations
 import logging
 import requests
 import urllib3
+from datetime import datetime, timedelta
 from butterfly import config
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 logger = logging.getLogger(__name__)
 BASE = "https://openapivts.koreainvestment.com:9443"
+
+_TOKEN_CACHE: dict = {"token": None, "expires_at": None}
 
 
 class KISError(Exception):
@@ -23,6 +26,13 @@ class KISPaperClient:
         self.token: str | None = None
 
     def authenticate(self):
+        now = datetime.now()
+        if (_TOKEN_CACHE.get("token") and
+                _TOKEN_CACHE.get("expires_at") and
+                now < _TOKEN_CACHE["expires_at"]):
+            self.token = _TOKEN_CACHE["token"]
+            logger.info("KIS 토큰 캐시 사용 (만료: %s)", _TOKEN_CACHE["expires_at"].strftime("%H:%M"))
+            return
         r = requests.post(f"{BASE}/oauth2/tokenP", json={
             "grant_type": "client_credentials",
             "appkey": self.app_key,
@@ -32,7 +42,10 @@ class KISPaperClient:
         self.token = data.get("access_token")
         if not self.token:
             raise KISError(f"토큰 발급 실패: {data}")
-        logger.info(f"KIS 인증 성공: token_type={data.get('token_type')} expires={data.get('access_token_token_expired')}")
+        _TOKEN_CACHE["token"] = self.token
+        _TOKEN_CACHE["expires_at"] = now + timedelta(hours=6)
+        logger.info("KIS 인증 성공: token_type=%s expires=%s",
+                    data.get("token_type"), data.get("access_token_token_expired"))
 
     def _headers(self, tr_id: str) -> dict:
         return {

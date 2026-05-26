@@ -122,7 +122,13 @@ def run_simulation(session: Session) -> int:
     executed = 0
 
     for sig in signals:
-        if sig.direction != "BUY":
+        if sig.direction == "SELL":
+            open_trade = session.query(Trade).filter_by(ticker=sig.ticker, status="open").first()
+            if open_trade:
+                price = _price(kis, open_trade.ticker)
+                if price:
+                    _close(open_trade, price, True, portfolio)
+                    logger.info("📉 SELL신호 청산: %s @%,.0f원", open_trade.ticker, price)
             sig.executed = True
             continue
 

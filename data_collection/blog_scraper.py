@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 
 import requests
 from bs4 import BeautifulSoup
@@ -183,7 +183,7 @@ def _parse_date(text: str) -> datetime:
             return datetime.strptime(text.strip(), fmt)
         except ValueError:
             continue
-    return datetime.utcnow()
+    return datetime.now(timezone.utc)
 
 
 def _get_with_retry(url: str, **kwargs) -> requests.Response:

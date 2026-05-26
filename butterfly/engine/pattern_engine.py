@@ -130,7 +130,12 @@ def _merge_signals(stored: list[dict], new: list[dict]):
         t = n["ticker"]
         if t in ticker_map:
             old = ticker_map[t]
-            old["avg_conf"] = (old.get("avg_conf", 0.7) + n.get("confidence", 0.7)) / 2
+            if old.get("direction") == n.get("direction"):
+                old["avg_conf"] = (old.get("avg_conf", 0.7) + n.get("confidence", 0.7)) / 2
+            else:
+                # 방향 충돌 → 최신 신호로 교체
+                old["direction"] = n["direction"]
+                old["avg_conf"] = n.get("confidence", 0.7)
         else:
             stored.append({"ticker": t, "name": n.get("name", ""),
                            "direction": n["direction"], "avg_conf": n.get("confidence", 0.7)})

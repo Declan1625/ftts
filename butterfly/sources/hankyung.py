@@ -1,8 +1,11 @@
 """한국경제신문 RSS"""
 from __future__ import annotations
 import httpx
+import logging
 import xml.etree.ElementTree as ET
 from email.utils import parsedate_to_datetime
+
+logger = logging.getLogger(__name__)
 
 FEEDS = [
     "https://www.hankyung.com/feed/economy",
@@ -26,8 +29,8 @@ def fetch() -> list[dict]:
                 if pub:
                     try:
                         published = parsedate_to_datetime(pub)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.warning("날짜 파싱 실패: %s", e)
                 if title:
                     items.append({
                         "source": "hankyung",
@@ -36,6 +39,6 @@ def fetch() -> list[dict]:
                         "url": link,
                         "published_at": published,
                     })
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("수집 실패 [%s]: %s", url, e)
     return items
