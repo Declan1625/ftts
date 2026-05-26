@@ -7,8 +7,6 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: #0d1117; color: #e6edf3; font-family: -apple-system, sans-serif; }
-
-/* ── 헤더 & 탭 ── */
 .header { padding: 14px 16px 0; }
 .header h1 { font-size: 1.25rem; margin-bottom: 12px; }
 .tab-nav { display: flex; gap: 4px; border-bottom: 1px solid #21262d; padding: 0 16px; overflow-x: auto; }
@@ -16,8 +14,6 @@ body { background: #0d1117; color: #e6edf3; font-family: -apple-system, sans-ser
 .tab-nav button.active { color: #e6edf3; border-bottom-color: #58a6ff; }
 .tab-panel { display: none; padding: 14px 16px; }
 .tab-panel.active { display: block; }
-
-/* ── 카드/공통 ── */
 .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
 .label { font-size: 0.72rem; color: #8b949e; margin-bottom: 4px; }
@@ -36,18 +32,14 @@ body { background: #0d1117; color: #e6edf3; font-family: -apple-system, sans-ser
 .badge-HIGH   { background:#3a1a1a; color:#f85149; }
 .badge-MEDIUM { background:#2a2a1a; color:#e3b341; }
 .badge-STABLE { background:#1a2a3a; color:#58a6ff; }
-.badge-buy  { background:#1a3a24; color:#3fb950; }
-.badge-sell { background:#3a1a1a; color:#f85149; }
-
-/* ── 포지션 테이블 ── */
+.badge-buy    { background:#1a3a24; color:#3fb950; }
+.badge-sell   { background:#3a1a1a; color:#f85149; }
 .pos-table { width:100%; border-collapse:collapse; font-size:0.78rem; }
 .pos-table th { color:#8b949e; padding:6px 4px; text-align:left; border-bottom:1px solid #30363d; }
 .pos-table td { padding:7px 4px; border-bottom:1px solid #21262d; }
 .pos-table tr:last-child td { border-bottom:none; }
 .pnl-pos { color:#3fb950; font-weight:bold; }
 .pnl-neg { color:#f85149; font-weight:bold; }
-
-/* ── 신호 ── */
 .signal { background:#161b22; border:1px solid #30363d; border-radius:8px; padding:11px; margin-bottom:7px; }
 .signal.buy  { border-left:3px solid #3fb950; }
 .signal.sell { border-left:3px solid #f85149; }
@@ -55,9 +47,7 @@ body { background: #0d1117; color: #e6edf3; font-family: -apple-system, sans-ser
 .signal .meta   { font-size:0.73rem; color:#8b949e; margin-top:4px; }
 .conf-bar  { height:3px; background:#30363d; border-radius:2px; margin-top:6px; }
 .conf-fill { height:100%; border-radius:2px; background:#3fb950; }
-
-/* ── 로그 ── */
-#log-box { background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:10px; height:260px; overflow-y:auto; font-family:monospace; font-size:0.7rem; line-height:1.6; }
+#log-box { background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:10px; height:280px; overflow-y:auto; font-family:monospace; font-size:0.7rem; line-height:1.6; }
 .log-line { color:#8b949e; }
 .log-line.hi  { color:#3fb950; }
 .log-line.err { color:#f85149; }
@@ -65,100 +55,86 @@ body { background: #0d1117; color: #e6edf3; font-family: -apple-system, sans-ser
 .dot.off { background:#30363d; animation:none; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-/* ══════════════════════════════════════
-   🦋 나비효과 시각화
-══════════════════════════════════════ */
-#chain-scroll { display:flex; gap:8px; overflow-x:auto; padding-bottom:8px; margin-bottom:14px; }
-#chain-scroll::-webkit-scrollbar { height:4px; }
-#chain-scroll::-webkit-scrollbar-track { background:#21262d; border-radius:2px; }
-#chain-scroll::-webkit-scrollbar-thumb { background:#58a6ff44; border-radius:2px; }
-
-.chain-pill { flex-shrink:0; background:#161b22; border:1px solid #30363d; border-radius:8px;
-  padding:8px 12px; cursor:pointer; max-width:200px; transition:border-color .15s; }
-.chain-pill:hover, .chain-pill.active { border-color:#58a6ff; }
-.chain-pill .cp-src  { font-size:0.65rem; color:#8b949e; margin-bottom:3px; }
-.chain-pill .cp-ev   { font-size:0.75rem; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.chain-pill .cp-dir  { font-size:0.65rem; margin-top:4px; }
-.chain-pill.dir-buy  { border-left:3px solid #3fb950; }
-.chain-pill.dir-sell { border-left:3px solid #f85149; }
-
-/* 플로우 다이어그램 */
-#flow-wrap { position:relative; min-height:260px; }
-#flow-svg  { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:visible; }
-
-.flow-cols { display:flex; gap:0; align-items:flex-start; }
-.flow-col  { display:flex; flex-direction:column; gap:10px; flex:1; padding:0 8px; }
-.flow-col-label { font-size:0.65rem; color:#8b949e; text-align:center; margin-bottom:6px; letter-spacing:.05em; text-transform:uppercase; }
-
-.fnode { border-radius:8px; padding:10px 12px; font-size:0.78rem; position:relative; transition:transform .15s; }
-.fnode:hover { transform:scale(1.02); }
-
-.fnode-event  { background:#1c2333; border:1px solid #388bfd66; }
-.fnode-event .fn-title { font-weight:bold; font-size:0.82rem; color:#79c0ff; line-height:1.3; }
-.fnode-event .fn-sub   { font-size:0.68rem; color:#8b949e; margin-top:4px; }
-
-.fnode-sector { border:1px solid #30363d; }
-.fnode-sector.pos { background:#0d2016; border-color:#3fb95066; }
-.fnode-sector.neg { background:#200d0d; border-color:#f8514966; }
-.fnode-sector .fn-name   { font-weight:bold; font-size:0.8rem; }
-.fnode-sector.pos .fn-name { color:#3fb950; }
-.fnode-sector.neg .fn-name { color:#f85149; }
-.fnode-sector .fn-reason { font-size:0.68rem; color:#8b949e; margin-top:3px; line-height:1.4; }
-
-.fnode-stock { border:1px solid #30363d; }
-.fnode-stock.buy  { background:#0d2016; border-color:#3fb95066; }
-.fnode-stock.sell { background:#200d0d; border-color:#f8514966; }
-.fnode-stock .fn-ticker  { font-weight:bold; font-size:0.78rem; }
-.fnode-stock.buy  .fn-ticker { color:#3fb950; }
-.fnode-stock.sell .fn-ticker { color:#f85149; }
-.fnode-stock .fn-company { font-size:0.68rem; color:#8b949e; }
-.fnode-stock .fn-conf    { font-size:0.65rem; color:#8b949e; margin-top:4px; }
-.fnode-stock .fn-conf-bar { height:2px; background:#30363d; border-radius:1px; margin-top:3px; }
-.fnode-stock .fn-conf-fill { height:100%; border-radius:1px; }
-.fnode-stock.buy  .fn-conf-fill { background:#3fb950; }
-.fnode-stock.sell .fn-conf-fill { background:#f85149; }
-
-@keyframes drawLine { to { stroke-dashoffset: 0; } }
-@keyframes nodePop  { 0%{opacity:0;transform:scale(.85)} 100%{opacity:1;transform:scale(1)} }
-.fnode { animation: nodePop .3s ease both; }
+/* ── 나비효과 캔버스 ── */
+#bf-wrap {
+  position: relative;
+  width: 100%;
+  height: 520px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #020408;
+  margin-bottom: 14px;
+  border: 1px solid #1a2a3a;
+}
+#bf-canvas { display: block; width: 100%; height: 100%; }
+#bf-legend {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  pointer-events: none;
+}
+.leg-item { display: flex; align-items: center; gap: 6px; font-size: 0.68rem; color: #8b949e; }
+.leg-dot  { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+#bf-info {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(22,27,34,0.9);
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 10px 13px;
+  font-size: 0.75rem;
+  max-width: 180px;
+  display: none;
+}
+#bf-info .bi-type  { font-size: 0.65rem; color: #8b949e; margin-bottom: 3px; }
+#bf-info .bi-label { font-weight: bold; line-height: 1.4; }
+#bf-info .bi-sub   { font-size: 0.68rem; color: #8b949e; margin-top: 3px; }
+#bf-loading { position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#8b949e;font-size:0.85rem;letter-spacing:.05em; }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <h1>🦋 나비효과 AI</h1>
-</div>
-
+<div class="header"><h1>🦋 나비효과 AI</h1></div>
 <nav class="tab-nav">
-  <button class="active" onclick="switchTab('butterfly')">🦋 나비효과</button>
-  <button onclick="switchTab('portfolio')">💼 포트폴리오</button>
-  <button onclick="switchTab('signals')">📡 신호</button>
-  <button onclick="switchTab('logs')">📋 로그</button>
+  <button class="active" onclick="switchTab('butterfly',this)">🦋 나비효과</button>
+  <button onclick="switchTab('portfolio',this)">💼 포트폴리오</button>
+  <button onclick="switchTab('signals',this)">📡 신호</button>
+  <button onclick="switchTab('logs',this)">📋 로그</button>
 </nav>
 
-<!-- ══ 나비효과 탭 ══ -->
+<!-- ══ 나비효과 ══ -->
 <div id="tab-butterfly" class="tab-panel active">
-  <div class="grid2" style="margin-bottom:12px">
+  <div class="grid2" style="margin-bottom:10px">
     <div class="card"><div class="label">이벤트 수집</div><div class="value" id="s-events">-</div></div>
     <div class="card"><div class="label">체인 분석</div><div class="value" id="s-chains">-</div></div>
     <div class="card"><div class="label">축적 패턴</div><div class="value" id="s-patterns">-</div></div>
     <div class="card"><div class="label">신호 발생</div><div class="value" id="s-signals">-</div></div>
   </div>
-
   <button class="btn btn-run" id="btn-run" onclick="runPipeline()">▶ 파이프라인 실행</button>
   <div class="status" id="status"></div>
 
-  <div class="sec-title">최근 나비효과 체인 — 클릭해서 인과관계 보기</div>
-  <div id="chain-scroll"><div class="empty">체인 없음 (파이프라인 실행 후 생성)</div></div>
-
-  <div id="flow-wrap">
-    <div id="flow-empty" class="empty" style="padding:40px">체인을 선택하면 인과관계 흐름이 표시됩니다</div>
-    <svg id="flow-svg" style="display:none"></svg>
-    <div id="flow-cols" class="flow-cols" style="display:none"></div>
+  <div id="bf-wrap">
+    <canvas id="bf-canvas"></canvas>
+    <div id="bf-loading">파이프라인 실행 후 나비효과가 나타납니다</div>
+    <div id="bf-legend">
+      <div class="leg-item"><div class="leg-dot" style="background:#388bfd;box-shadow:0 0 6px #388bfd"></div>글로벌 이벤트</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#e3b341;box-shadow:0 0 6px #e3b341"></div>영향 섹터</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#3fb950;box-shadow:0 0 6px #3fb950"></div>BUY 종목</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#f85149;box-shadow:0 0 6px #f85149"></div>SELL 종목</div>
+    </div>
+    <div id="bf-info">
+      <div class="bi-type" id="bi-type"></div>
+      <div class="bi-label" id="bi-label"></div>
+      <div class="bi-sub" id="bi-sub"></div>
+    </div>
   </div>
 </div>
 
-<!-- ══ 포트폴리오 탭 ══ -->
+<!-- ══ 포트폴리오 ══ -->
 <div id="tab-portfolio" class="tab-panel">
   <div class="grid2">
     <div class="card"><div class="label">평가총액</div><div class="value sm" id="p-total">-</div></div>
@@ -166,10 +142,7 @@ body { background: #0d1117; color: #e6edf3; font-family: -apple-system, sans-ser
     <div class="card"><div class="label">투자금액</div><div class="value sm" id="p-invested">-</div></div>
     <div class="card"><div class="label">누적수익률</div><div class="value sm" id="p-pnl-pct">-</div></div>
   </div>
-  <div class="sec-title">
-    <span>오픈 포지션</span>
-    <span id="p-open-cnt" style="color:#58a6ff;font-size:0.8rem"></span>
-  </div>
+  <div class="sec-title"><span>오픈 포지션</span><span id="p-open-cnt" style="color:#58a6ff;font-size:0.8rem"></span></div>
   <div class="card" style="overflow-x:auto;padding:0">
     <table class="pos-table">
       <thead><tr><th>티어</th><th>종목</th><th>수량</th><th>매수가</th><th>현재가</th><th>목표/손절</th><th>손익</th></tr></thead>
@@ -185,13 +158,13 @@ body { background: #0d1117; color: #e6edf3; font-family: -apple-system, sans-ser
   </div>
 </div>
 
-<!-- ══ 신호 탭 ══ -->
+<!-- ══ 신호 ══ -->
 <div id="tab-signals" class="tab-panel">
   <button class="btn btn-refresh" onclick="loadSignals()">↻ 새로고침</button>
   <div id="signals-list"></div>
 </div>
 
-<!-- ══ 로그 탭 ══ -->
+<!-- ══ 로그 ══ -->
 <div id="tab-logs" class="tab-panel">
   <div class="sec-title">
     <span><span class="dot off" id="dot"></span>실시간 로그</span>
@@ -203,219 +176,398 @@ body { background: #0d1117; color: #e6edf3; font-family: -apple-system, sans-ser
 <script>
 const BASE = '';
 let es = null;
-let _chains = [];
 
-/* ── 탭 전환 ── */
-function switchTab(name) {
+/* ══ 탭 ══ */
+function switchTab(name, btn) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-nav button').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
-  event.currentTarget.classList.add('active');
-  if (name === 'butterfly') loadChains();
+  btn.classList.add('active');
+  if (name === 'butterfly') { loadStats(); graph && graph.resize(); }
   if (name === 'portfolio') { loadPortfolio(); loadMetrics(); }
-  if (name === 'signals') loadSignals();
-  if (name === 'logs') connectSSE();
+  if (name === 'signals')   loadSignals();
+  if (name === 'logs')      connectSSE();
 }
 
-/* ── 포맷 ── */
 const fmt    = n => n == null ? '-' : Math.round(n).toLocaleString('ko-KR') + '원';
 const fmtPct = n => n == null ? '-' : (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
 
-/* ══ 나비효과 시각화 ══ */
+/* ════════════════════════════════════
+   🦋 포스 그래프 시뮬레이션
+════════════════════════════════════ */
+class ButterflyGraph {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.nodes = new Map();
+    this.edges = [];
+    this.stars = this._genStars(200);
+    this.nebulae = this._genNebulae(5);
+    this.running = false;
+    this.hovered = null;
+    this.t = 0;
+    canvas.addEventListener('mousemove', e => this._onMove(e));
+    canvas.addEventListener('click',     e => this._onClick(e));
+    canvas.addEventListener('mouseleave',() => { this.hovered = null; this._hideInfo(); });
+    this.resize();
+  }
+
+  resize() {
+    const wrap = this.canvas.parentElement;
+    this.canvas.width  = wrap.clientWidth;
+    this.canvas.height = wrap.clientHeight;
+    this.W = this.canvas.width;
+    this.H = this.canvas.height;
+  }
+
+  _genStars(n) {
+    return Array.from({length:n}, () => ({
+      x: Math.random(), y: Math.random(),
+      r: Math.random() * 1.2 + 0.3,
+      a: Math.random() * 0.5 + 0.15,
+      spd: Math.random() * 2 + 1,
+    }));
+  }
+
+  _genNebulae(n) {
+    return Array.from({length:n}, () => ({
+      x: Math.random(), y: Math.random(),
+      r: Math.random() * 200 + 100,
+      color: ['#0d2040','#1a0d20','#0d1a10','#201a0d','#0a0a2a'][Math.floor(Math.random()*5)],
+    }));
+  }
+
+  load(chains) {
+    this.nodes.clear();
+    this.edges = [];
+    document.getElementById('bf-loading').style.display = 'none';
+
+    const add = (id, data) => {
+      if (!this.nodes.has(id)) {
+        /* 초기 위치: 원형 배치 후 중심으로 튀어들어오게 */
+        const angle = Math.random() * Math.PI * 2;
+        const dist  = Math.min(this.W, this.H) * 0.48;
+        const x = this.W/2 + Math.cos(angle) * dist;
+        const y = this.H/2 + Math.sin(angle) * dist;
+        this.nodes.set(id, {
+          id, ...data, x, y,
+          vx: (this.W/2 - x) * 0.06 + (Math.random()-.5)*4,
+          vy: (this.H/2 - y) * 0.06 + (Math.random()-.5)*4,
+          pulse: Math.random() * Math.PI * 2,
+        });
+      }
+    };
+
+    chains.forEach(chain => {
+      const evId = `ev-${chain.id}`;
+      add(evId, {
+        type:'event', label: (chain.event||'').slice(0,22),
+        sub: chain.event_source || '',
+        r:18, color:'#388bfd', glow:'#1a6fff',
+      });
+
+      const cd = chain.chain || {};
+      const sectors = _parseSectors(cd);
+      const signals = _parseSignals(cd);
+
+      sectors.forEach(sec => {
+        const sid = `sec-${sec.name}`;
+        add(sid, {
+          type:'sector', label:sec.name, sub: sec.reason ? sec.reason.slice(0,20) : '',
+          r:13, color:'#e3b341', glow:'#ffaa00',
+          impact: sec.impact,
+        });
+        this._addEdge(evId, sid, sec.impact === 'negative' ? '#f85149' : '#3fb950');
+
+        signals.forEach((sig, i) => {
+          const stid = `st-${sig.ticker||chain.id+'-'+i}`;
+          const dir  = (sig.direction||'BUY').toLowerCase();
+          add(stid, {
+            type:'stock', label: sig.ticker||'',
+            sub: (sig.company_name||sig.name||'').slice(0,10),
+            r:8, color: dir==='buy'?'#3fb950':'#f85149',
+            glow: dir==='buy'?'#00dd44':'#ff2233',
+            direction: dir, conf: sig.confidence||0.5,
+          });
+          /* 섹터 → 종목 연결 (순서 기반 분배) */
+          const si = Math.floor(i / Math.max(1, Math.ceil(signals.length / sectors.length)));
+          if (si === sectors.indexOf(sec) || sectors.length <= 1) {
+            this._addEdge(sid, stid, dir==='buy'?'#3fb950':'#f85149');
+          }
+        });
+      });
+
+      /* 섹터 없으면 이벤트 → 종목 직결 */
+      if (!sectors.length) {
+        signals.forEach((sig, i) => {
+          const stid = `st-${sig.ticker||chain.id+'-'+i}`;
+          const dir  = (sig.direction||'BUY').toLowerCase();
+          add(stid, {
+            type:'stock', label:sig.ticker||'',
+            sub:(sig.company_name||sig.name||'').slice(0,10),
+            r:8, color:dir==='buy'?'#3fb950':'#f85149',
+            glow:dir==='buy'?'#00dd44':'#ff2233',
+            direction:dir, conf:sig.confidence||0.5,
+          });
+          this._addEdge(evId, stid, dir==='buy'?'#3fb950':'#f85149');
+        });
+      }
+    });
+
+    if (!this.running) this._start();
+  }
+
+  _addEdge(from, to, color) {
+    /* 중복 엣지 방지 */
+    if (!this.edges.find(e => e.from===from && e.to===to)) {
+      this.edges.push({ from, to, color,
+        pts: [Math.random(), Math.random()+0.33, Math.random()+0.67].map(p => p%1),
+      });
+    }
+  }
+
+  _start() { this.running = true; this._tick(); }
+  _stop()  { this.running = false; }
+
+  _tick() {
+    if (!this.running) return;
+    this._simulate();
+    this._draw();
+    this.t++;
+    requestAnimationFrame(() => this._tick());
+  }
+
+  _simulate() {
+    const ns = [...this.nodes.values()];
+    const W = this.W, H = this.H;
+
+    /* 반발력 */
+    for (let i = 0; i < ns.length; i++) {
+      for (let j = i+1; j < ns.length; j++) {
+        const a = ns[i], b = ns[j];
+        const dx = b.x-a.x, dy = b.y-a.y;
+        const d2 = dx*dx + dy*dy || 1;
+        const d  = Math.sqrt(d2);
+        const f  = 2200 / d2;
+        const fx = dx/d*f, fy = dy/d*f;
+        a.vx -= fx; a.vy -= fy;
+        b.vx += fx; b.vy += fy;
+      }
+    }
+
+    /* 스프링 인력 */
+    this.edges.forEach(e => {
+      const a = this.nodes.get(e.from), b = this.nodes.get(e.to);
+      if (!a || !b) return;
+      const dx = b.x-a.x, dy = b.y-a.y;
+      const d = Math.sqrt(dx*dx+dy*dy) || 1;
+      const target = (a.r + b.r) * 3.5 + 55;
+      const f = (d - target) * 0.028;
+      a.vx += dx/d*f; a.vy += dy/d*f;
+      b.vx -= dx/d*f; b.vy -= dy/d*f;
+    });
+
+    /* 중심 인력 */
+    ns.forEach(n => { n.vx += (W/2-n.x)*0.0018; n.vy += (H/2-n.y)*0.0018; });
+
+    /* 적분 + 감쇄 + 경계 */
+    ns.forEach(n => {
+      n.vx *= 0.86; n.vy *= 0.86;
+      n.x = Math.max(n.r+8, Math.min(W-n.r-8, n.x+n.vx));
+      n.y = Math.max(n.r+8, Math.min(H-n.r-8, n.y+n.vy));
+      n.pulse += 0.035;
+    });
+
+    /* 파티클 이동 */
+    this.edges.forEach(e => {
+      e.pts = e.pts.map(p => (p + 0.0035) % 1);
+    });
+  }
+
+  _draw() {
+    const ctx = this.ctx;
+    const W = this.W, H = this.H;
+    const t = this.t;
+
+    /* 배경 — 잔상 효과 */
+    ctx.fillStyle = 'rgba(2,4,8,0.22)';
+    ctx.fillRect(0,0,W,H);
+
+    /* 성운 */
+    this.nebulae.forEach(n => {
+      const grd = ctx.createRadialGradient(n.x*W, n.y*H, 0, n.x*W, n.y*H, n.r);
+      grd.addColorStop(0, n.color+'cc');
+      grd.addColorStop(1, 'transparent');
+      ctx.fillStyle = grd;
+      ctx.fillRect(0,0,W,H);
+    });
+
+    /* 별 */
+    this.stars.forEach(s => {
+      const tw = Math.sin(t * 0.02 * s.spd + s.x * 100) * 0.3 + 0.7;
+      ctx.beginPath();
+      ctx.arc(s.x*W, s.y*H, s.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(180,210,255,${s.a * tw})`;
+      ctx.fill();
+    });
+
+    const hov = this.hovered;
+
+    /* ── 엣지 ── */
+    this.edges.forEach(e => {
+      const a = this.nodes.get(e.from), b = this.nodes.get(e.to);
+      if (!a || !b) return;
+      const hi = hov && (hov.id===e.from || hov.id===e.to);
+
+      /* 베지어 제어점 — 살짝 휘게 */
+      const mx = (a.x+b.x)/2 + (b.y-a.y)*0.18;
+      const my = (a.y+b.y)/2 - (b.x-a.x)*0.18;
+
+      /* 글로우 라인 (3겹) */
+      [[6, 0.04],[2.5, 0.12],[1, hi?0.55:0.25]].forEach(([w, alpha]) => {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.quadraticCurveTo(mx, my, b.x, b.y);
+        ctx.strokeStyle = e.color + Math.round(alpha*255).toString(16).padStart(2,'0');
+        ctx.lineWidth = w;
+        ctx.stroke();
+        ctx.restore();
+      });
+
+      /* 파티클 3개 */
+      e.pts.forEach((p, pi) => {
+        const tt = p;
+        const px = (1-tt)*(1-tt)*a.x + 2*(1-tt)*tt*mx + tt*tt*b.x;
+        const py = (1-tt)*(1-tt)*a.y + 2*(1-tt)*tt*my + tt*tt*b.y;
+        const pr = pi === 0 ? 3 : 2;
+        ctx.save();
+        ctx.shadowColor = e.color;
+        ctx.shadowBlur  = 12;
+        ctx.beginPath();
+        ctx.arc(px, py, pr, 0, Math.PI*2);
+        ctx.fillStyle = e.color;
+        ctx.fill();
+        ctx.restore();
+      });
+    });
+
+    /* ── 노드 ── */
+    [...this.nodes.values()].forEach(n => {
+      const pulse = 1 + Math.sin(n.pulse) * 0.12;
+      const r = n.r * pulse;
+      const hi = hov && hov.id === n.id;
+      const dim = hov && !hi &&
+        !this.edges.some(e => (e.from===hov.id||e.to===hov.id) && (e.from===n.id||e.to===n.id));
+
+      ctx.save();
+      ctx.globalAlpha = dim ? 0.25 : 1;
+
+      /* 외곽 후광 */
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, r + (hi?10:5), 0, Math.PI*2);
+      const haloGrd = ctx.createRadialGradient(n.x,n.y,r,n.x,n.y,r+(hi?10:5));
+      haloGrd.addColorStop(0, n.glow + (hi?'55':'22'));
+      haloGrd.addColorStop(1, 'transparent');
+      ctx.fillStyle = haloGrd;
+      ctx.fill();
+
+      /* 노드 본체 */
+      ctx.shadowColor = n.glow;
+      ctx.shadowBlur  = hi ? 30 : 18;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, r, 0, Math.PI*2);
+      ctx.fillStyle = n.color + 'dd';
+      ctx.fill();
+
+      /* 내부 하이라이트 */
+      ctx.shadowBlur = 0;
+      const ig = ctx.createRadialGradient(n.x-r*.3,n.y-r*.35,0,n.x,n.y,r);
+      ig.addColorStop(0, 'rgba(255,255,255,0.55)');
+      ig.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = ig;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, r, 0, Math.PI*2);
+      ctx.fill();
+
+      ctx.restore();
+
+      /* 라벨 */
+      if (!dim) {
+        ctx.save();
+        ctx.shadowColor = '#000'; ctx.shadowBlur = 4;
+        ctx.textAlign = 'center';
+        ctx.font = `bold ${n.type==='event'?11:9}px -apple-system,sans-serif`;
+        ctx.fillStyle = hi ? '#fff' : '#c9d1d9';
+        ctx.fillText(n.label, n.x, n.y + r + 13);
+        if (n.sub) {
+          ctx.font = '8px -apple-system,sans-serif';
+          ctx.fillStyle = '#6e7681';
+          ctx.fillText(n.sub, n.x, n.y + r + 23);
+        }
+        ctx.restore();
+      }
+    });
+  }
+
+  _onMove(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    const mx = (e.clientX - rect.left) * (this.W / rect.width);
+    const my = (e.clientY - rect.top)  * (this.H / rect.height);
+    let closest = null, minD = 999;
+    this.nodes.forEach(n => {
+      const d = Math.hypot(n.x-mx, n.y-my);
+      if (d < n.r + 12 && d < minD) { minD = d; closest = n; }
+    });
+    this.hovered = closest;
+    this.canvas.style.cursor = closest ? 'pointer' : 'default';
+    if (closest) this._showInfo(closest);
+    else this._hideInfo();
+  }
+
+  _onClick(e) { /* 호버 노드 고정 선택 — 추후 확장 */ }
+
+  _showInfo(n) {
+    const el = document.getElementById('bf-info');
+    const typeMap = { event:'글로벌 이벤트', sector:'영향 섹터', stock:'매매 종목' };
+    document.getElementById('bi-type').textContent  = typeMap[n.type] || n.type;
+    document.getElementById('bi-label').textContent = n.label;
+    document.getElementById('bi-sub').textContent   = n.sub || (n.conf ? `신뢰도 ${(n.conf*100).toFixed(0)}%` : '');
+    el.style.display = 'block';
+  }
+
+  _hideInfo() { document.getElementById('bf-info').style.display = 'none'; }
+}
+
+/* ── 파싱 헬퍼 ── */
+function _parseSectors(cd) {
+  let s = cd.sectors_affected || cd.sectors || cd.affected_sectors || [];
+  if (typeof s === 'string') try { s = JSON.parse(s); } catch{ s=[]; }
+  if (!Array.isArray(s)) s = [];
+  return s.map(x => typeof x === 'string'
+    ? {name:x, impact:'neutral', reason:''}
+    : {name:x.name||x.sector||String(x), impact:x.impact||'neutral', reason:x.reason||x.reasoning||''});
+}
+function _parseSignals(cd) {
+  let s = cd.signals || cd.tickers || [];
+  if (typeof s === 'string') try { s = JSON.parse(s); } catch{ s=[]; }
+  return Array.isArray(s) ? s : [];
+}
+
+/* ── 그래프 인스턴스 ── */
+let graph = null;
+function initGraph() {
+  const canvas = document.getElementById('bf-canvas');
+  graph = new ButterflyGraph(canvas);
+  window.addEventListener('resize', () => graph.resize());
+}
+
 async function loadChains() {
   try {
-    const r = await fetch(BASE + '/chains?limit=15');
-    _chains = await r.json();
-    renderChainScroll(_chains);
-    if (_chains.length) renderButterfly(_chains[0]);
+    const r = await fetch(BASE + '/chains?limit=20');
+    const chains = await r.json();
+    if (chains.length && graph) graph.load(chains);
   } catch(e) { console.warn(e); }
-}
-
-function renderChainScroll(chains) {
-  const el = document.getElementById('chain-scroll');
-  if (!chains.length) { el.innerHTML = '<div class="empty">체인 없음</div>'; return; }
-  el.innerHTML = chains.map((c, i) => {
-    const dirClass = (c.direction || '').toLowerCase() === 'buy' ? 'dir-buy' : 'dir-sell';
-    const icon = (c.direction || '').toLowerCase() === 'buy' ? '🟢' : '🔴';
-    const conf = c.confidence ? (c.confidence * 100).toFixed(0) + '%' : '';
-    const src = c.event_source ? `[${c.event_source}]` : '';
-    return `<div class="chain-pill ${dirClass} ${i===0?'active':''}" onclick="selectChain(${i}, this)">
-      <div class="cp-src">${src} ${conf}</div>
-      <div class="cp-ev">${c.event || '(이벤트 없음)'}</div>
-      <div class="cp-dir">${icon} ${c.direction || ''}</div>
-    </div>`;
-  }).join('');
-}
-
-function selectChain(idx, el) {
-  document.querySelectorAll('.chain-pill').forEach(p => p.classList.remove('active'));
-  el.classList.add('active');
-  renderButterfly(_chains[idx]);
-}
-
-function renderButterfly(chain) {
-  const empty  = document.getElementById('flow-empty');
-  const svg    = document.getElementById('flow-svg');
-  const cols   = document.getElementById('flow-cols');
-  empty.style.display = 'none';
-  svg.style.display   = 'block';
-  cols.style.display  = 'flex';
-  svg.innerHTML = '';
-
-  /* 체인 데이터 파싱 */
-  const cd = chain.chain || {};
-  const sectors = parseSectors(cd);
-  const stocks  = parseSignals(cd);
-
-  /* 종목을 섹터에 분배 */
-  const sectorStocks = sectors.map((sec, si) => {
-    /* 간단히 순서대로 분배, 혹은 sector 이름 매칭 */
-    const assigned = stocks.filter(s =>
-      (s.sector && s.sector === sec.name) ||
-      (sectors.length === 1) ||
-      (si === Math.floor((stocks.indexOf(s) / stocks.length) * sectors.length))
-    );
-    return { sec, stocks: assigned };
-  });
-  /* 매칭 안 된 종목은 마지막 섹터에 */
-  const assigned = sectorStocks.flatMap(ss => ss.stocks);
-  const leftover = stocks.filter(s => !assigned.includes(s));
-  if (sectorStocks.length) sectorStocks[sectorStocks.length-1].stocks.push(...leftover);
-  else sectorStocks.push({ sec: { name: '영향 섹터', impact: 'neutral' }, stocks });
-
-  /* HTML 구성 */
-  const tierLabel = { HIGH:'위험', MEDIUM:'중간', STABLE:'안정' };
-  const impactClass = imp => imp === 'positive' ? 'pos' : imp === 'negative' ? 'neg' : '';
-
-  // Col 0: Event
-  const eventHtml = `<div class="flow-col">
-    <div class="flow-col-label">트리거 이벤트</div>
-    <div class="fnode fnode-event" id="fn-ev">
-      <div class="fn-title">${chain.event || '(이벤트)'}</div>
-      <div class="fn-sub">출처: ${chain.event_source || '-'} | 신뢰도: ${chain.confidence ? (chain.confidence*100).toFixed(0)+'%' : '-'}</div>
-    </div>
-  </div>`;
-
-  // Col 1: Sectors
-  const sectorHtml = `<div class="flow-col">
-    <div class="flow-col-label">영향 섹터</div>
-    ${sectorStocks.map((ss, i) => `
-      <div class="fnode fnode-sector ${impactClass(ss.sec.impact)}" id="fn-sec-${i}" style="animation-delay:${i*0.07+0.1}s">
-        <div class="fn-name">${ss.sec.name}</div>
-        <div class="fn-reason">${ss.sec.reason || ''}</div>
-      </div>`).join('')}
-  </div>`;
-
-  // Col 2: Stocks
-  const stockHtml = `<div class="flow-col">
-    <div class="flow-col-label">매매 신호</div>
-    ${sectorStocks.flatMap((ss, si) =>
-      ss.stocks.map((s, ti) => {
-        const dir = (s.direction || '').toLowerCase();
-        const tier = s.risk_tier || 'MEDIUM';
-        const conf = s.confidence || 0;
-        const delay = (si * ss.stocks.length + ti) * 0.08 + 0.2;
-        return `<div class="fnode fnode-stock ${dir}" id="fn-st-${si}-${ti}" style="animation-delay:${delay}s">
-          <span class="badge badge-${dir}" style="float:right">${s.direction||''}</span>
-          <span class="badge badge-${tier}" style="float:right;margin-right:4px">${tierLabel[tier]||tier}</span>
-          <div class="fn-ticker">${s.ticker||''}</div>
-          <div class="fn-company">${s.company_name||s.company||''}</div>
-          <div class="fn-conf">신뢰도 ${(conf*100).toFixed(0)}%</div>
-          <div class="fn-conf-bar"><div class="fn-conf-fill" style="width:${(conf*100).toFixed(0)}%"></div></div>
-        </div>`;
-      })
-    ).join('')}
-  </div>`;
-
-  cols.innerHTML = eventHtml + sectorHtml + stockHtml;
-
-  /* SVG 연결선 그리기 */
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => drawConnections(sectorStocks));
-  });
-}
-
-function drawConnections(sectorStocks) {
-  const svg  = document.getElementById('flow-svg');
-  const wrap = document.getElementById('flow-wrap');
-  const rect = wrap.getBoundingClientRect();
-
-  svg.setAttribute('viewBox', `0 0 ${rect.width} ${rect.height}`);
-
-  const evEl = document.getElementById('fn-ev');
-  if (!evEl) return;
-
-  sectorStocks.forEach((ss, si) => {
-    const secEl = document.getElementById(`fn-sec-${si}`);
-    if (!secEl) return;
-
-    // Event → Sector
-    drawCurve(svg, rect, evEl, secEl, ss.sec.impact, si * 0.1);
-
-    // Sector → Stocks
-    ss.stocks.forEach((s, ti) => {
-      const stEl = document.getElementById(`fn-st-${si}-${ti}`);
-      if (!stEl) return;
-      const dir = (s.direction || '').toLowerCase();
-      drawCurve(svg, rect, secEl, stEl, dir === 'buy' ? 'positive' : 'negative', (si * ss.stocks.length + ti) * 0.08 + 0.15);
-    });
-  });
-}
-
-function drawCurve(svg, wrapRect, fromEl, toEl, impact, delay) {
-  const fr = fromEl.getBoundingClientRect();
-  const tr = toEl.getBoundingClientRect();
-
-  const x1 = fr.right  - wrapRect.left;
-  const y1 = fr.top + fr.height / 2 - wrapRect.top;
-  const x2 = tr.left   - wrapRect.left;
-  const y2 = tr.top + tr.height / 2 - wrapRect.top;
-  const cx = (x1 + x2) / 2;
-
-  const color = impact === 'positive' ? '#3fb950' : impact === 'negative' ? '#f85149' : '#58a6ff';
-
-  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  path.setAttribute('d', `M ${x1} ${y1} C ${cx} ${y1}, ${cx} ${y2}, ${x2} ${y2}`);
-  path.setAttribute('stroke', color);
-  path.setAttribute('stroke-width', '1.5');
-  path.setAttribute('fill', 'none');
-  path.setAttribute('stroke-opacity', '0.6');
-
-  const len = path.getTotalLength ? path.getTotalLength() : 200;
-  path.style.strokeDasharray = len;
-  path.style.strokeDashoffset = len;
-  path.style.animation = `drawLine 0.6s ease ${delay}s forwards`;
-  svg.appendChild(path);
-
-  // 화살표 마커
-  const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-  arrow.setAttribute('cx', x2);
-  arrow.setAttribute('cy', y2);
-  arrow.setAttribute('r', '3');
-  arrow.setAttribute('fill', color);
-  arrow.setAttribute('opacity', '0');
-  arrow.style.animation = `nodePop .2s ease ${delay + 0.5}s forwards`;
-  svg.appendChild(arrow);
-}
-
-function parseSectors(cd) {
-  let secs = cd.sectors_affected || cd.sectors || cd.affected_sectors || [];
-  if (typeof secs === 'string') { try { secs = JSON.parse(secs); } catch { secs = []; } }
-  if (!Array.isArray(secs)) secs = [];
-  return secs.map(s => typeof s === 'string'
-    ? { name: s, impact: 'neutral', reason: '' }
-    : { name: s.name || s.sector || String(s), impact: s.impact || 'neutral', reason: s.reason || s.reasoning || '' }
-  );
-}
-
-function parseSignals(cd) {
-  let sigs = cd.signals || cd.tickers || cd.ticker_signals || [];
-  if (typeof sigs === 'string') { try { sigs = JSON.parse(sigs); } catch { sigs = []; } }
-  if (!Array.isArray(sigs)) sigs = [];
-  return sigs.map(s => typeof s === 'string'
-    ? { ticker: s, company_name: '', direction: 'BUY', confidence: 0.5, risk_tier: 'MEDIUM' }
-    : s
-  );
 }
 
 /* ══ 포트폴리오 ══ */
@@ -427,53 +579,43 @@ async function loadPortfolio() {
   document.getElementById('p-invested').textContent = fmt(d.invested);
   const pEl = document.getElementById('p-pnl-pct');
   pEl.textContent = fmtPct(d.total_pnl_pct);
-  pEl.className   = 'value sm ' + (d.total_pnl_pct >= 0 ? 'pos' : 'neg');
-
+  pEl.className = 'value sm ' + (d.total_pnl_pct >= 0 ? 'pos' : 'neg');
   const positions = d.positions || [];
   document.getElementById('p-open-cnt').textContent = positions.length + '건';
   const tbody = document.getElementById('positions-body');
-  if (!positions.length) {
-    tbody.innerHTML = '<tr><td colspan="7" class="empty">포지션 없음</td></tr>'; return;
-  }
-  const tl = { HIGH:'위험', MEDIUM:'중간', STABLE:'안정' };
+  if (!positions.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">포지션 없음</td></tr>'; return; }
+  const tl = {HIGH:'위험',MEDIUM:'중간',STABLE:'안정'};
   tbody.innerHTML = positions.map(p => {
-    const cls = p.pnl_pct >= 0 ? 'pnl-pos' : 'pnl-neg';
-    const tier = p.risk_tier || 'MEDIUM';
+    const cls = p.pnl_pct>=0?'pnl-pos':'pnl-neg', tier=p.risk_tier||'MEDIUM';
     return `<tr>
       <td><span class="badge badge-${tier}">${tl[tier]||tier}</span></td>
       <td><b>${p.company||p.ticker}</b><br><span style="color:#8b949e;font-size:0.68rem">${p.ticker}</span></td>
-      <td>${p.qty}주</td>
-      <td>${fmt(p.entry_price)}</td>
-      <td>${fmt(p.current_price)}</td>
+      <td>${p.qty}주</td><td>${fmt(p.entry_price)}</td><td>${fmt(p.current_price)}</td>
       <td style="font-size:0.68rem;color:#8b949e">🎯${fmt(p.target_price)}<br>🛑${fmt(p.stop_loss)}</td>
       <td class="${cls}">${fmtPct(p.pnl_pct)}<br><span style="font-size:0.68rem">${Math.round(p.pnl||0).toLocaleString()}원</span></td>
     </tr>`;
   }).join('');
 }
-
 async function loadMetrics() {
   try {
-    const r = await fetch(BASE + '/metrics');
-    const d = await r.json();
-    document.getElementById('m-winrate').textContent = d.win_rate + '%';
+    const d = await (await fetch(BASE+'/metrics')).json();
+    document.getElementById('m-winrate').textContent = d.win_rate+'%';
     document.getElementById('m-sharpe').textContent  = d.sharpe;
-    document.getElementById('m-mdd').textContent     = d.mdd + '%';
-    document.getElementById('m-trades').textContent  = d.total_trades + '건';
+    document.getElementById('m-mdd').textContent     = d.mdd+'%';
+    document.getElementById('m-trades').textContent  = d.total_trades+'건';
   } catch(e) {}
 }
 
 /* ══ 신호 ══ */
 async function loadSignals() {
-  const r = await fetch(BASE + '/signals?limit=20');
-  const list = await r.json();
+  const list = await (await fetch(BASE+'/signals?limit=20')).json();
   const el = document.getElementById('signals-list');
   if (!list.length) { el.innerHTML = '<div class="empty">신호 없음</div>'; return; }
   el.innerHTML = list.map(s => `
     <div class="signal ${(s.direction||'').toLowerCase()}">
-      <div class="ticker">
-        ${s.company||s.ticker} <span style="color:#8b949e;font-size:0.75rem">${s.ticker}</span>
+      <div class="ticker">${s.company||s.ticker} <span style="color:#8b949e;font-size:0.75rem">${s.ticker}</span>
         <span class="badge badge-${(s.direction||'').toLowerCase()}" style="float:right">${s.direction}</span>
-        ${s.executed ? '<span class="badge" style="background:#1a2a3a;color:#58a6ff;float:right;margin-right:6px">✅완료</span>' : ''}
+        ${s.executed?'<span class="badge" style="background:#1a2a3a;color:#58a6ff;float:right;margin-right:6px">✅완료</span>':''}
       </div>
       <div class="conf-bar"><div class="conf-fill" style="width:${((s.confidence||0)*100).toFixed(0)}%"></div></div>
       <div class="meta">신뢰도 ${((s.confidence||0)*100).toFixed(0)}%</div>
@@ -482,12 +624,11 @@ async function loadSignals() {
 
 /* ══ 통계 ══ */
 async function loadStats() {
-  const r = await fetch(BASE + '/stats');
-  const d = await r.json();
-  document.getElementById('s-events').textContent   = d.events || 0;
-  document.getElementById('s-chains').textContent   = d.chains || 0;
-  document.getElementById('s-signals').textContent  = d.signals || 0;
-  document.getElementById('s-patterns').textContent = d.patterns || 0;
+  const d = await (await fetch(BASE+'/stats')).json();
+  document.getElementById('s-events').textContent   = d.events||0;
+  document.getElementById('s-chains').textContent   = d.chains||0;
+  document.getElementById('s-signals').textContent  = d.signals||0;
+  document.getElementById('s-patterns').textContent = d.patterns||0;
 }
 
 /* ══ 파이프라인 ══ */
@@ -495,37 +636,33 @@ async function runPipeline() {
   const btn = document.getElementById('btn-run');
   btn.disabled = true; btn.textContent = '⏳ 실행 중...';
   document.getElementById('status').textContent = '파이프라인 시작됨...';
-  try { await fetch(BASE + '/run'); } catch(e) {}
-  setTimeout(() => { btn.disabled = false; btn.textContent = '▶ 파이프라인 실행'; }, 5000);
+  try { await fetch(BASE+'/run'); } catch(e) {}
+  setTimeout(() => { btn.disabled=false; btn.textContent='▶ 파이프라인 실행'; }, 5000);
 }
 
-/* ══ 로그 SSE ══ */
+/* ══ SSE ══ */
 function connectSSE() {
   if (es) return;
-  es = new EventSource(BASE + '/logs/stream');
+  es = new EventSource(BASE+'/logs/stream');
   document.getElementById('dot').classList.remove('off');
   es.onmessage = e => {
-    if (e.data === 'ping') return;
+    if (e.data==='ping') return;
     const box = document.getElementById('log-box');
     const line = document.createElement('div');
-    const good = e.data.includes('✅') || e.data.includes('매수') || e.data.includes('완료') || e.data.includes('목표');
-    const bad  = e.data.includes('실패') || e.data.includes('ERROR') || e.data.includes('손절');
-    line.className = 'log-line' + (good ? ' hi' : bad ? ' err' : '');
+    const g = e.data.includes('✅')||e.data.includes('매수')||e.data.includes('완료')||e.data.includes('목표');
+    const b = e.data.includes('실패')||e.data.includes('ERROR')||e.data.includes('손절');
+    line.className = 'log-line'+(g?' hi':b?' err':'');
     line.textContent = e.data;
     box.appendChild(line);
     box.scrollTop = box.scrollHeight;
     if (e.data.includes('파이프라인 완료')) { loadStats(); loadChains(); }
   };
-  es.onerror = () => {
-    document.getElementById('dot').classList.add('off');
-    es = null;
-    setTimeout(connectSSE, 3000);
-  };
+  es.onerror = () => { document.getElementById('dot').classList.add('off'); es=null; setTimeout(connectSSE,3000); };
 }
+function clearLog() { document.getElementById('log-box').innerHTML=''; }
 
-function clearLog() { document.getElementById('log-box').innerHTML = ''; }
-
-/* ── 초기 로드 ── */
+/* ── 초기화 ── */
+initGraph();
 loadStats();
 loadChains();
 connectSSE();
