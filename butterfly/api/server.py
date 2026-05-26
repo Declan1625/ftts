@@ -1,11 +1,13 @@
 from __future__ import annotations
 from contextlib import asynccontextmanager
+from collections import deque
 from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from pathlib import Path
 from sqlalchemy import func
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+import asyncio
 import httpx
 import logging
 
@@ -21,22 +23,47 @@ logger = logging.getLogger(__name__)
 
 scheduler = AsyncIOScheduler()
 
+# 실시간 로그 버퍼 (최근 100개)
+_log_buffer: deque[str] = deque(maxlen=100)
+_log_listeners: list[asyncio.Queue] = []
+
+
+class PipelineLogHandler(logging.Handler):
+    def emit(self, record):
+        msg = self.format(record)
+        _log_buffer.append(msg)
+        for q in _log_listeners:
+            try:
+                q.put_nowait(msg)
+            except asyncio.QueueFull:
+                pass
+
+
+_handler = PipelineLogHandler()
+_handler.setFormatter(logging.Formatter("%(asctime)s %(name)s: %(message)s", "%H:%M:%S"))
+logging.getLogger("butterfly").addHandler(_handler)
+logging.getLogger("httpx").addHandler(_handler)
+
 
 async def run_pipeline():
-    logger.info("파이프라인 시작")
+    logger.info("🦋 파이프라인 시작")
     s = get_session()
     try:
+        logger.info("📡 이벤트 수집 중...")
         collected = collect_and_save(s)
-        logger.info("수집: %d건", collected)
+        logger.info("✅ 수집 완료: %d건", collected)
 
+        logger.info("🔍 나비효과 분석 중...")
         processed = process_pending(s)
-        logger.info("분석: %d건", processed)
+        logger.info("✅ 분석 완료: %d건", processed)
 
+        logger.info("📈 모의투자 실행 중...")
         traded = execute_pending(s)
-        logger.info("모의투자: %d건", traded)
+        logger.info("✅ 모의투자 완료: %d건", traded)
 
         if processed > 0:
             await notify_discord(s)
+        logger.info("🏁 파이프라인 완료")
     finally:
         s.close()
 
@@ -108,25 +135,34 @@ def stats():
     }
 
 
-@app.post("/collect")
-async def collect():
-    s = get_session()
-    n = collect_and_save(s)
-    return {"collected": n}
-
-
-@app.post("/process")
-async def process():
-    s = get_session()
-    n = process_pending(s)
-    return {"processed": n}
-
-
 @app.get("/run")
 async def run_now(background_tasks: BackgroundTasks):
-    """즉시 파이프라인 실행 (백그라운드)"""
     background_tasks.add_task(run_pipeline)
-    return {"status": "started", "message": "파이프라인 백그라운드 실행 중. /stats 로 확인하세요."}
+    return {"status": "started"}
+
+
+@app.get("/logs/stream")
+async def log_stream():
+    """SSE 실시간 로그 스트리밍"""
+    q: asyncio.Queue = asyncio.Queue(maxsize=50)
+    _log_listeners.append(q)
+
+    async def generate():
+        # 기존 버퍼 먼저 전송
+        for msg in list(_log_buffer):
+            yield f"data: {msg}\n\n"
+        try:
+            while True:
+                try:
+                    msg = await asyncio.wait_for(q.get(), timeout=30)
+                    yield f"data: {msg}\n\n"
+                except asyncio.TimeoutError:
+                    yield "data: ping\n\n"
+        finally:
+            _log_listeners.remove(q)
+
+    return StreamingResponse(generate(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 @app.get("/signals")

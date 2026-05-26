@@ -26,9 +26,16 @@
   .badge-sell { background: #3a1a1a; color: #f85149; }
   .badge-done { background: #1a2a3a; color: #58a6ff; }
   .status { text-align: center; font-size: 0.85rem; color: #8b949e; margin: 8px 0; min-height: 20px; }
-  .section-title { font-size: 0.9rem; color: #8b949e; margin: 16px 0 8px; }
+  .section-title { font-size: 0.9rem; color: #8b949e; margin: 16px 0 8px; display: flex; justify-content: space-between; }
   .conf-bar { height: 4px; background: #30363d; border-radius: 2px; margin-top: 6px; }
   .conf-fill { height: 100%; border-radius: 2px; background: #3fb950; }
+  #log-box { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 12px; height: 220px; overflow-y: auto; font-family: monospace; font-size: 0.72rem; line-height: 1.6; }
+  #log-box .log-line { color: #8b949e; }
+  #log-box .log-line.hi { color: #3fb950; }
+  #log-box .log-line.err { color: #f85149; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #3fb950; display: inline-block; margin-right: 6px; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .dot.off { background: #30363d; animation: none; }
 </style>
 </head>
 <body>
@@ -45,11 +52,44 @@
 <button class="btn btn-refresh" onclick="loadAll()">↻ 새로고침</button>
 <div class="status" id="status"></div>
 
+<div class="section-title">
+  <span><span class="dot off" id="dot"></span>실시간 로그</span>
+  <span style="cursor:pointer;color:#58a6ff" onclick="clearLog()">지우기</span>
+</div>
+<div id="log-box"></div>
+
 <div class="section-title">최근 신호</div>
 <div id="signals-list"></div>
 
 <script>
 const BASE = '';
+let es = null;
+
+function connectSSE() {
+  if (es) es.close();
+  es = new EventSource(BASE + '/logs/stream');
+  document.getElementById('dot').classList.remove('off');
+
+  es.onmessage = e => {
+    if (e.data === 'ping') return;
+    const box = document.getElementById('log-box');
+    const line = document.createElement('div');
+    line.className = 'log-line' + (e.data.includes('✅') || e.data.includes('완료') ? ' hi' : e.data.includes('실패') || e.data.includes('ERROR') ? ' err' : '');
+    line.textContent = e.data;
+    box.appendChild(line);
+    box.scrollTop = box.scrollHeight;
+    // 신호/모의투자 완료 시 자동 새로고침
+    if (e.data.includes('파이프라인 완료')) loadAll();
+  };
+  es.onerror = () => {
+    document.getElementById('dot').classList.add('off');
+    setTimeout(connectSSE, 3000);
+  };
+}
+
+function clearLog() {
+  document.getElementById('log-box').innerHTML = '';
+}
 
 async function loadStats() {
   const r = await fetch(BASE + '/stats');
@@ -70,7 +110,7 @@ async function loadSignals() {
       <div class="ticker">
         ${s.company || s.ticker} <span style="color:#8b949e;font-size:0.8rem">${s.ticker}</span>
         <span class="badge ${s.direction === 'BUY' ? 'badge-buy' : 'badge-sell'}" style="float:right">${s.direction}</span>
-        ${s.executed ? '<span class="badge badge-done" style="float:right;margin-right:6px">주문완료</span>' : ''}
+        ${s.executed ? '<span class="badge badge-done" style="float:right;margin-right:6px">✅주문완료</span>' : ''}
       </div>
       <div class="conf-bar"><div class="conf-fill" style="width:${(s.confidence*100).toFixed(0)}%"></div></div>
       <div class="meta">신뢰도 ${(s.confidence*100).toFixed(0)}%</div>
@@ -81,16 +121,11 @@ async function loadSignals() {
 async function runPipeline() {
   const btn = document.getElementById('btn-run');
   btn.disabled = true;
-  btn.textContent = '실행 중...';
-  setStatus('파이프라인 시작 중...');
+  btn.textContent = '⏳ 실행 중...';
   try {
     await fetch(BASE + '/run');
-    setStatus('✅ 실행됨 - 2~3분 후 새로고침하세요');
-    setTimeout(loadAll, 5000);
-  } catch(e) {
-    setStatus('❌ 오류: ' + e.message);
-  }
-  setTimeout(() => { btn.disabled = false; btn.textContent = '▶ 파이프라인 실행'; }, 3000);
+  } catch(e) {}
+  setTimeout(() => { btn.disabled = false; btn.textContent = '▶ 파이프라인 실행'; }, 5000);
 }
 
 function setStatus(msg) {
@@ -98,11 +133,11 @@ function setStatus(msg) {
 }
 
 async function loadAll() {
-  setStatus('로딩 중...');
   await Promise.all([loadStats(), loadSignals()]);
-  setStatus('마지막 업데이트: ' + new Date().toLocaleTimeString('ko-KR'));
+  setStatus('업데이트: ' + new Date().toLocaleTimeString('ko-KR'));
 }
 
+connectSSE();
 loadAll();
 setInterval(loadAll, 60000);
 </script>
