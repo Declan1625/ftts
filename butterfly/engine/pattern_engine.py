@@ -30,13 +30,16 @@ def find_pattern(session: Session, sectors: list[str]) -> CausalPattern | None:
     """유사 패턴 검색 - 섹터 겹침률 기반"""
     if not sectors:
         return None
+    # occurrence_count >= 2면 후보. accuracy는 피드백 데이터 있을 때만 필터
     candidates = session.query(CausalPattern).filter(
-        CausalPattern.accuracy >= PATTERN_REUSE_THRESHOLD,
         CausalPattern.occurrence_count >= 2,
     ).all()
 
     best, best_score = None, 0.0
     for c in candidates:
+        # 실거래 피드백이 쌓인 경우에만 accuracy 게이트 적용
+        if c.correct_count > 0 and c.accuracy < PATTERN_REUSE_THRESHOLD:
+            continue
         stored = json.loads(c.affected_sectors or "[]")
         score = _overlap_ratio(sectors, stored)
         if score > best_score and score >= SECTOR_OVERLAP_THRESHOLD:

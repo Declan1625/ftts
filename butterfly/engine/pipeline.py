@@ -4,7 +4,7 @@ import json
 import logging
 from sqlalchemy.orm import Session
 from butterfly.db.models import Event, ButterflyChain, Signal
-from butterfly.engine.analyzer import analyze, analyze_batch
+from butterfly.engine import analyzer as _analyzer
 from butterfly.engine.pattern_engine import find_pattern, save_pattern, pattern_to_result
 from butterfly.engine.event_scorer import score_event, quick_sectors
 from butterfly.config import BUY_CONFIDENCE_MIN
@@ -71,7 +71,7 @@ def process_pending(session: Session, max_per_cycle: int = 30) -> int:
     # ── 2단계: Batch API로 cache-miss 일괄 분석 ──────────────────────
     claude_results: dict[int, dict | None] = {}
     if needs_claude:
-        batch_out = analyze_batch([(e.title, e.body or "") for e in needs_claude])
+        batch_out = _analyzer.analyze_batch([(e.title, e.body or "") for e in needs_claude])
         for event, result in zip(needs_claude, batch_out):
             claude_results[event.id] = result
     logger.info("파이프라인: Batch %d건 / 캐시 %d건", len(needs_claude), len(cache_results))
