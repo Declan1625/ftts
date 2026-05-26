@@ -2,6 +2,7 @@
 from __future__ import annotations
 import json
 import logging
+import re
 import anthropic
 from butterfly.config import ANTHROPIC_API_KEY, ANTHROPIC_MODEL
 
@@ -54,6 +55,20 @@ SYSTEM_PROMPT = f"""당신은 세계 경제 인과관계 전문가이자 한국 
 signals가 없으면 "signals": [] 반환."""
 
 
+def _extract_json(raw: str) -> dict | None:
+    """Claude 응답에서 JSON 객체 추출 — 코드블록/앞뒤 텍스트 무시"""
+    # 코드블록 제거
+    text = re.sub(r"```(?:json)?", "", raw).strip()
+    # { ... } 블록 직접 추출
+    m = re.search(r"\{[\s\S]*\}", text)
+    if not m:
+        return None
+    try:
+        return json.loads(m.group())
+    except json.JSONDecodeError:
+        return None
+
+
 def _prepare_input(title: str, body: str) -> str:
     """핵심 수치 추출 포함 입력 전처리"""
     if not body:
@@ -86,19 +101,19 @@ def analyze(title: str, body: str) -> dict | None:
                 messages=[{"role": "user", "content": f"다음 사건의 나비효과를 분석하세요:\n\n{text}"}],
             )
             raw = resp.content[0].text.strip()
-            if raw.startswith("```"):
-                raw = raw.split("```")[1]
-                if raw.startswith("json"):
-                    raw = raw[4:]
-            return json.loads(raw.strip())
+            extracted = _extract_json(raw)
+            if extracted is None:
+                logger.error("Claude JSON 파싱 실패 | 원문(200자): %s", raw[:200])
+                if attempt < 2:
+                    import time; time.sleep(5)
+                    continue
+                return None
+            return extracted
         except anthropic.RateLimitError:
             import time
             wait = 10 * (2 ** attempt)
             logger.warning("Claude 레이트리밋, %ds 대기 (%d/3)", wait, attempt + 1)
             time.sleep(wait)
-        except json.JSONDecodeError:
-            logger.error("Claude 응답 JSON 파싱 실패")
-            return None
         except Exception as e:
             logger.error("분석 실패 [시도 %d]: %s", attempt + 1, e)
             if attempt == 2:
