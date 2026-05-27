@@ -47,6 +47,19 @@ for _lg_name in ("butterfly", "httpx"):
         _lg.addHandler(_handler)
 
 
+async def monitor_positions():
+    """5분마다 오픈 포지션 가격 체크 → 목표가/손절 즉시 청산 (Claude 미사용)"""
+    s = get_session()
+    try:
+        closed = await asyncio.to_thread(run_simulation, s)
+        if closed:
+            logger.info("⏱️ 5분 모니터링: %d건 청산", closed)
+    except Exception as e:
+        logger.error("포지션 모니터링 실패: %s", e)
+    finally:
+        s.close()
+
+
 async def run_pipeline():
     logger.info("🦋 파이프라인 시작")
     s = get_session()
@@ -59,9 +72,9 @@ async def run_pipeline():
         processed = await asyncio.to_thread(process_pending, s)
         logger.info("✅ 분석 완료: %d건", processed)
 
-        logger.info("💼 시뮬레이션 실행 중...")
+        logger.info("💼 신규 신호 처리 중...")
         traded = await asyncio.to_thread(run_simulation, s)
-        logger.info("✅ 시뮬레이션 완료: %d건 매수", traded)
+        logger.info("✅ 신호 처리 완료: %d건 매수", traded)
 
         if processed > 0:
             await notify_discord(s)
@@ -176,6 +189,7 @@ async def morning_briefing():
 async def lifespan(app: FastAPI):
     init_db()
     scheduler.add_job(run_pipeline, "interval", minutes=30, id="pipeline")
+    scheduler.add_job(monitor_positions, "interval", minutes=5, id="position_monitor")
     # 매일 오전 8시 KST 일간 브리핑
     scheduler.add_job(
         morning_briefing, "cron",
@@ -185,7 +199,7 @@ async def lifespan(app: FastAPI):
         id="morning_briefing",
     )
     scheduler.start()
-    logger.info("나비효과 AI 시작 - 30분 파이프라인 + 08:00 KST 일간 브리핑 활성화")
+    logger.info("나비효과 AI 시작 - 5분 포지션 모니터링 + 30분 파이프라인 + 08:00 브리핑")
     yield
     scheduler.shutdown()
 
