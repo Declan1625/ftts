@@ -41,8 +41,10 @@ class PipelineLogHandler(logging.Handler):
 
 _handler = PipelineLogHandler()
 _handler.setFormatter(logging.Formatter("%(asctime)s %(name)s: %(message)s", "%H:%M:%S"))
-logging.getLogger("butterfly").addHandler(_handler)
-logging.getLogger("httpx").addHandler(_handler)
+for _lg_name in ("butterfly", "httpx"):
+    _lg = logging.getLogger(_lg_name)
+    if not any(isinstance(h, PipelineLogHandler) for h in _lg.handlers):
+        _lg.addHandler(_handler)
 
 
 async def run_pipeline():

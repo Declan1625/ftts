@@ -57,9 +57,17 @@ signals가 없으면 "signals": [] 반환."""
 
 def _extract_json(raw: str) -> dict | None:
     """Claude 응답에서 JSON 객체 추출 — 코드블록/앞뒤 텍스트 무시"""
-    # 코드블록 제거
     text = re.sub(r"```(?:json)?", "", raw).strip()
-    # { ... } 블록 직접 추출
+    # 첫 { 부터 추출 시도 (JSONDecoder 자동 경계 탐지)
+    start = text.find("{")
+    if start == -1:
+        return None
+    try:
+        obj, _ = json.JSONDecoder().raw_decode(text, start)
+        return obj
+    except json.JSONDecodeError:
+        pass
+    # fallback: greedy 매치 후 파싱
     m = re.search(r"\{[\s\S]*\}", text)
     if not m:
         return None
@@ -92,7 +100,7 @@ def analyze(title: str, body: str) -> dict | None:
         try:
             resp = client.messages.create(
                 model=ANTHROPIC_MODEL,
-                max_tokens=1500,
+                max_tokens=2000,
                 system=[{
                     "type": "text",
                     "text": SYSTEM_PROMPT,
@@ -141,7 +149,7 @@ def analyze_batch(events_data: list[tuple[str, str]]) -> list[dict | None]:
             "custom_id": f"ev-{i}",
             "params": {
                 "model": ANTHROPIC_MODEL,
-                "max_tokens": 1500,
+                "max_tokens": 2000,
                 "system": [{"type": "text", "text": SYSTEM_PROMPT,
                              "cache_control": {"type": "ephemeral"}}],
                 "messages": [{"role": "user", "content":
