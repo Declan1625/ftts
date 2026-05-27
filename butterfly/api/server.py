@@ -210,15 +210,17 @@ async def lifespan(app: FastAPI):
     )
     scheduler.start()
 
-    # KIS WebSocket 체결 통보 (백그라운드)
-    _ws_stop = asyncio.Event()
+    # KIS WebSocket 체결 통보 — 실전 전환 시 활성화
+    # WEBSOCKET_ENABLED=true 환경변수로 켤 수 있음
     _ws_task = None
-    try:
-        from butterfly.trading.kis_websocket import listen as ws_listen
-        _ws_task = asyncio.create_task(ws_listen(_ws_stop))
-        logger.info("📡 KIS WebSocket 체결 통보 시작")
-    except Exception as e:
-        logger.warning("KIS WebSocket 시작 실패 (무시): %s", e)
+    if os.getenv("WEBSOCKET_ENABLED", "false").lower() == "true":
+        _ws_stop = asyncio.Event()
+        try:
+            from butterfly.trading.kis_websocket import listen as ws_listen
+            _ws_task = asyncio.create_task(ws_listen(_ws_stop))
+            logger.info("📡 KIS WebSocket 체결 통보 시작")
+        except Exception as e:
+            logger.warning("KIS WebSocket 시작 실패 (무시): %s", e)
 
     logger.info("🦋 나비효과 AI 시작 — DB:%s | 5분모니터링 | 30분파이프라인 | 08:00브리핑 | WebSocket", db_type)
     yield
