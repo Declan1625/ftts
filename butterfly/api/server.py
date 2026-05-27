@@ -29,6 +29,20 @@ _pipeline_lock = asyncio.Lock()
 _log_buffer: deque[str] = deque(maxlen=100)
 _log_listeners: list[asyncio.Queue] = []
 
+KST_OFFSET = timedelta(hours=9)
+
+
+def _is_market_hours() -> bool:
+    """KST 09:00~15:30 장 중 여부"""
+    kst_now = datetime.now(timezone.utc) + KST_OFFSET
+    t = kst_now.time()
+    from datetime import time as dtime
+    return dtime(9, 0) <= t <= dtime(15, 30)
+
+
+def _market_status() -> str:
+    return "장중" if _is_market_hours() else "장외"
+
 
 class PipelineLogHandler(logging.Handler):
     def emit(self, record):
@@ -51,6 +65,8 @@ for _lg_name in ("butterfly", "httpx"):
 
 async def monitor_positions():
     """5분마다 오픈 포지션 가격 체크 → 목표가/손절 즉시 청산 (Claude 미사용)"""
+    if not _is_market_hours():
+        return  # 장외 시간 — KIS 가격 조회 불필요
     s = get_session()
     try:
         closed = await asyncio.to_thread(run_simulation, s)
@@ -63,6 +79,9 @@ async def monitor_positions():
 
 
 async def run_pipeline():
+    if not _is_market_hours():
+        logger.info("💤 장외 시간 — 파이프라인 스킵 (8시 브리핑에서 일괄 처리)")
+        return
     if _pipeline_lock.locked():
         logger.warning("⚠️ 파이프라인 이미 실행 중 — 중복 스킵")
         return
@@ -117,7 +136,20 @@ async def notify_discord(session):
 
 
 async def morning_briefing():
-    """매일 오전 8시 KST 일간 브리핑 → Discord"""
+    """매일 오전 8시 KST: 밤새 뉴스 수집+분석 → Discord 브리핑"""
+    # ── 밤새 이벤트 일괄 수집 & 분석 (장 시작 전 준비) ──────────────
+    s0 = get_session()
+    try:
+        logger.info("🌅 8시 브리핑: 밤새 이벤트 수집 시작")
+        collected = await asyncio.to_thread(collect_and_save, s0)
+        logger.info("✅ 수집 %d건", collected)
+        processed = await asyncio.to_thread(process_pending, s0)
+        logger.info("✅ 분석 %d건 → 09:00 개장 시 자동 매수 대기", processed)
+    except Exception as e:
+        logger.error("브리핑 사전 수집 실패: %s", e)
+    finally:
+        s0.close()
+
     if not config.DISCORD_WEBHOOK or not config.DISCORD_WEBHOOK.startswith("http"):
         return
     s = get_session()
@@ -178,7 +210,7 @@ async def morning_briefing():
 
         lines += [
             "",
-            "⚡ 30분 파이프라인 가동 중 | 장 시작(09:00) 자동 매수 대기",
+            "⚡ 밤새 뉴스 분석 완료 | 장 시작(09:00) 자동 매수 대기",
         ]
 
         async with httpx.AsyncClient() as client:
