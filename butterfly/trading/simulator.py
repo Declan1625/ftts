@@ -170,6 +170,13 @@ def run_simulation(session: Session) -> int:
             sig.executed = True
             continue
 
+        # 전체 포지션 상한 체크
+        total_open = session.query(Trade).filter_by(status="open").count()
+        if total_open >= config.MAX_POSITIONS:
+            logger.info("📊 포지션 상한(%d) 도달 — 신규 매수 스킵", config.MAX_POSITIONS)
+            sig.executed = True
+            continue
+
         # 중복 포지션 차단
         if session.query(Trade).filter_by(ticker=sig.ticker, status="open").first():
             logger.info("중복 포지션 차단: %s", sig.ticker)
