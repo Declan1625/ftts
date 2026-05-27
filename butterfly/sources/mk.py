@@ -8,8 +8,8 @@ from email.utils import parsedate_to_datetime
 logger = logging.getLogger(__name__)
 
 FEEDS = [
-    "https://rss.mk.co.kr/economy.xml",
-    "https://rss.mk.co.kr/stock.xml",
+    "http://file.mk.co.kr/news/rss/rss_30100041.xml",  # 경제
+    "http://file.mk.co.kr/news/rss/rss_50200011.xml",  # 증권
 ]
 
 
