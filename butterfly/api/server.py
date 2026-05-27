@@ -11,6 +11,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import asyncio
 import httpx
 import logging
+import os
 
 from butterfly.db.manager import init_db, get_session
 from butterfly.db.models import Event, ButterflyChain, Signal, Trade, Portfolio, CausalPattern
