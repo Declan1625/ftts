@@ -396,6 +396,29 @@ async def log_stream():
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
+@app.get("/trades")
+def trade_history(limit: int = 50):
+    s = get_session()
+    try:
+        rows = s.query(Trade).filter_by(status="closed").order_by(Trade.exited_at.desc()).limit(limit).all()
+        return [{
+            "ticker": t.ticker,
+            "company": t.company_name,
+            "direction": t.direction,
+            "risk_tier": t.risk_tier,
+            "qty": t.quantity,
+            "entry_price": t.price_at_entry,
+            "exit_price": t.price_at_exit,
+            "pnl": round(t.pnl or 0),
+            "pnl_pct": round(t.pnl_pct or 0, 2),
+            "is_correct": t.is_correct,
+            "entered_at": t.entered_at.isoformat() if t.entered_at else None,
+            "exited_at": t.exited_at.isoformat() if t.exited_at else None,
+        } for t in rows]
+    finally:
+        s.close()
+
+
 @app.get("/signals")
 def signals(limit: int = 20):
     s = get_session()

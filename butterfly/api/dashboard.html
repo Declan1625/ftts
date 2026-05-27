@@ -8,30 +8,29 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: #0d1117; color: #e6edf3; font-family: -apple-system, sans-serif; }
 .header { padding: 14px 16px 0; }
-.header h1 { font-size: 1.25rem; }
 .header-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.header h1 { font-size: 1.25rem; }
 .btn-wake { background:none; border:1px solid #30363d; color:#8b949e; font-size:0.72rem; padding:5px 12px; border-radius:6px; cursor:pointer; }
 .btn-wake:hover { border-color:#58a6ff; color:#58a6ff; }
-.tab-nav { display: flex; gap: 4px; border-bottom: 1px solid #21262d; padding: 0 16px; overflow-x: auto; }
-.tab-nav button { background: none; border: none; color: #8b949e; font-size: 0.85rem; padding: 8px 14px; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: color .15s; }
-.tab-nav button.active { color: #e6edf3; border-bottom-color: #58a6ff; }
-.tab-panel { display: none; padding: 14px 16px; }
-.tab-panel.active { display: block; }
-.card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px; }
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-.label { font-size: 0.72rem; color: #8b949e; margin-bottom: 4px; }
-.value { font-size: 1.5rem; font-weight: bold; }
-.value.sm { font-size: 1.05rem; }
-.pos { color: #3fb950; } .neg { color: #f85149; }
-.btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: bold; cursor: pointer; margin-bottom: 8px; }
-.btn-run { background: #238636; color: #fff; }
-.btn-run:disabled { background: #1a3a24; color: #555; }
-.btn-refresh { background: #1f6feb; color: #fff; }
-.status { text-align: center; font-size: 0.78rem; color: #8b949e; margin: 4px 0 10px; min-height: 16px; }
-.divider { border: none; border-top: 1px solid #21262d; margin: 14px 0; }
-.sec-title { font-size: 0.82rem; color: #8b949e; margin: 14px 0 8px; display: flex; justify-content: space-between; align-items: center; }
-.empty { color: #8b949e; font-size: 0.82rem; text-align: center; padding: 20px; }
-.badge { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
+.tab-nav { display:flex; gap:2px; border-bottom:1px solid #21262d; padding:0 16px; overflow-x:auto; }
+.tab-nav button { background:none; border:none; color:#8b949e; font-size:0.82rem; padding:8px 12px; cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; }
+.tab-nav button.active { color:#e6edf3; border-bottom-color:#58a6ff; }
+.tab-panel { display:none; padding:14px 16px; }
+.tab-panel.active { display:block; }
+.card { background:#161b22; border:1px solid #30363d; border-radius:8px; padding:14px; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+.grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:12px; }
+.label { font-size:0.72rem; color:#8b949e; margin-bottom:4px; }
+.value { font-size:1.5rem; font-weight:bold; }
+.value.sm { font-size:1.05rem; }
+.pos { color:#3fb950; } .neg { color:#f85149; }
+.btn { width:100%; padding:12px; border:none; border-radius:8px; font-size:0.9rem; font-weight:bold; cursor:pointer; margin-bottom:8px; }
+.btn-run { background:#238636; color:#fff; }
+.btn-run:disabled { background:#1a3a24; color:#555; }
+.btn-refresh { background:#1f6feb; color:#fff; }
+.sec-title { font-size:0.82rem; color:#8b949e; margin:14px 0 8px; display:flex; justify-content:space-between; align-items:center; }
+.empty { color:#8b949e; font-size:0.82rem; text-align:center; padding:20px; }
+.badge { display:inline-block; padding:2px 7px; border-radius:4px; font-size:0.7rem; font-weight:bold; }
 .badge-HIGH   { background:#3a1a1a; color:#f85149; }
 .badge-MEDIUM { background:#2a2a1a; color:#e3b341; }
 .badge-STABLE { background:#1a2a3a; color:#58a6ff; }
@@ -39,7 +38,7 @@ body { background: #0d1117; color: #e6edf3; font-family: -apple-system, sans-ser
 .badge-sell   { background:#3a1a1a; color:#f85149; }
 .pos-table { width:100%; border-collapse:collapse; font-size:0.78rem; }
 .pos-table th { color:#8b949e; padding:6px 4px; text-align:left; border-bottom:1px solid #30363d; }
-.pos-table td { padding:7px 4px; border-bottom:1px solid #21262d; }
+.pos-table td { padding:7px 4px; border-bottom:1px solid #21262d; vertical-align:middle; }
 .pos-table tr:last-child td { border-bottom:none; }
 .pnl-pos { color:#3fb950; font-weight:bold; }
 .pnl-neg { color:#f85149; font-weight:bold; }
@@ -50,7 +49,7 @@ body { background: #0d1117; color: #e6edf3; font-family: -apple-system, sans-ser
 .signal .meta   { font-size:0.73rem; color:#8b949e; margin-top:4px; }
 .conf-bar  { height:3px; background:#30363d; border-radius:2px; margin-top:6px; }
 .conf-fill { height:100%; border-radius:2px; background:#3fb950; }
-#log-box { background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:10px; height:280px; overflow-y:auto; font-family:monospace; font-size:0.7rem; line-height:1.6; }
+#log-box { background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:10px; height:320px; overflow-y:auto; font-family:monospace; font-size:0.7rem; line-height:1.6; }
 .log-line { color:#8b949e; }
 .log-line.hi  { color:#3fb950; }
 .log-line.err { color:#f85149; }
@@ -58,45 +57,26 @@ body { background: #0d1117; color: #e6edf3; font-family: -apple-system, sans-ser
 .dot.off { background:#30363d; animation:none; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-/* ── 나비효과 캔버스 ── */
-#bf-wrap {
-  position: relative;
-  width: 100%;
-  height: 520px;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #020408;
-  margin-bottom: 14px;
-  border: 1px solid #1a2a3a;
-}
-#bf-canvas { display: block; width: 100%; height: 100%; }
-#bf-legend {
-  position: absolute;
-  bottom: 12px;
-  left: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  pointer-events: none;
-}
-.leg-item { display: flex; align-items: center; gap: 6px; font-size: 0.68rem; color: #8b949e; }
-.leg-dot  { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-#bf-info {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: rgba(22,27,34,0.9);
-  border: 1px solid #30363d;
-  border-radius: 8px;
-  padding: 10px 13px;
-  font-size: 0.75rem;
-  max-width: 180px;
-  display: none;
-}
-#bf-info .bi-type  { font-size: 0.65rem; color: #8b949e; margin-bottom: 3px; }
-#bf-info .bi-label { font-weight: bold; line-height: 1.4; }
-#bf-info .bi-sub   { font-size: 0.68rem; color: #8b949e; margin-top: 3px; }
-#bf-loading { position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#8b949e;font-size:0.85rem;letter-spacing:.05em; }
+/* 신뢰도 게이지 */
+.acc-gauge { text-align:center; padding:20px 0; }
+.acc-num { font-size:3rem; font-weight:bold; }
+.acc-bar { height:8px; background:#21262d; border-radius:4px; margin:12px 0; overflow:hidden; }
+.acc-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,#f85149,#e3b341,#3fb950); transition:width .6s; }
+.live-badge { display:inline-block; padding:4px 14px; border-radius:20px; font-size:0.8rem; font-weight:bold; margin-top:8px; }
+.live-yes { background:#1a3a24; color:#3fb950; border:1px solid #3fb950; }
+.live-no  { background:#2a1a1a; color:#8b949e; border:1px solid #30363d; }
+
+/* 나비효과 캔버스 */
+#bf-wrap { position:relative; width:100%; height:460px; border-radius:12px; overflow:hidden; background:#020408; margin-bottom:14px; border:1px solid #1a2a3a; }
+#bf-canvas { display:block; width:100%; height:100%; }
+#bf-legend { position:absolute; bottom:12px; left:12px; display:flex; flex-direction:column; gap:5px; pointer-events:none; }
+.leg-item { display:flex; align-items:center; gap:6px; font-size:0.68rem; color:#8b949e; }
+.leg-dot  { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+#bf-info { position:absolute; top:12px; right:12px; background:rgba(22,27,34,0.9); border:1px solid #30363d; border-radius:8px; padding:10px 13px; font-size:0.75rem; max-width:180px; display:none; }
+#bf-info .bi-type  { font-size:0.65rem; color:#8b949e; margin-bottom:3px; }
+#bf-info .bi-label { font-weight:bold; line-height:1.4; }
+#bf-info .bi-sub   { font-size:0.68rem; color:#8b949e; margin-top:3px; }
+#bf-loading { position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#8b949e;font-size:0.85rem; }
 </style>
 </head>
 <body>
@@ -104,35 +84,93 @@ body { background: #0d1117; color: #e6edf3; font-family: -apple-system, sans-ser
 <div class="header">
   <div class="header-row">
     <h1>🦋 나비효과 AI</h1>
-    <button class="btn-wake" onclick="wakeBriefing()" title="서버 깨우기 + Discord 브리핑 전송">🌅 브리핑</button>
+    <button class="btn-wake" onclick="wakeBriefing()">🌅 브리핑</button>
   </div>
 </div>
+
 <nav class="tab-nav">
-  <button class="active" onclick="switchTab('butterfly',this)">🦋 나비효과</button>
-  <button onclick="switchTab('portfolio',this)">💼 포트폴리오</button>
-  <button onclick="switchTab('signals',this)">📡 신호</button>
+  <button class="active" onclick="switchTab('portfolio',this)">💼 보유</button>
+  <button onclick="switchTab('history',this)">📋 매매이력</button>
+  <button onclick="switchTab('accuracy',this)">📊 신뢰도</button>
+  <button onclick="switchTab('butterfly',this)">🦋 나비효과</button>
   <button onclick="switchTab('logs',this)">📋 로그</button>
 </nav>
 
+<!-- ══ 보유 (포트폴리오) ══ -->
+<div id="tab-portfolio" class="tab-panel active">
+  <div class="grid2">
+    <div class="card"><div class="label">평가총액</div><div class="value sm" id="p-total">-</div></div>
+    <div class="card"><div class="label">누적수익률</div><div class="value sm" id="p-pnl-pct">-</div></div>
+    <div class="card"><div class="label">보유현금</div><div class="value sm" id="p-cash">-</div></div>
+    <div class="card"><div class="label">투자금액</div><div class="value sm" id="p-invested">-</div></div>
+  </div>
+  <div class="sec-title">
+    <span>오픈 포지션</span>
+    <span id="p-open-cnt" style="color:#58a6ff;font-size:0.8rem"></span>
+  </div>
+  <div class="card" style="overflow-x:auto;padding:0">
+    <table class="pos-table">
+      <thead><tr><th>티어</th><th>종목</th><th>수량</th><th>매수가</th><th>현재가</th><th>목표/손절</th><th>손익</th></tr></thead>
+      <tbody id="positions-body"><tr><td colspan="7" class="empty">포지션 없음</td></tr></tbody>
+    </table>
+  </div>
+  <div class="sec-title" style="margin-top:16px">성과 지표</div>
+  <div class="grid2">
+    <div class="card"><div class="label">승률</div><div class="value sm" id="m-winrate">-</div></div>
+    <div class="card"><div class="label">MDD</div><div class="value sm" id="m-mdd">-</div></div>
+    <div class="card"><div class="label">Sharpe</div><div class="value sm" id="m-sharpe">-</div></div>
+    <div class="card"><div class="label">총 거래</div><div class="value sm" id="m-trades">-</div></div>
+  </div>
+</div>
+
+<!-- ══ 매매이력 ══ -->
+<div id="tab-history" class="tab-panel">
+  <div class="card" style="overflow-x:auto;padding:0">
+    <table class="pos-table">
+      <thead><tr><th>날짜</th><th>종목</th><th>티어</th><th>수량</th><th>매수가</th><th>매도가</th><th>수익률</th><th>손익</th><th>결과</th></tr></thead>
+      <tbody id="history-body"><tr><td colspan="9" class="empty">청산 거래 없음</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ 신뢰도 ══ -->
+<div id="tab-accuracy" class="tab-panel">
+  <div class="card" style="text-align:center;padding:24px 14px">
+    <div class="label">누적 정확도 (목표 80%)</div>
+    <div class="acc-gauge">
+      <div class="acc-num" id="acc-num">-</div>
+    </div>
+    <div class="acc-bar"><div class="acc-fill" id="acc-fill" style="width:0%"></div></div>
+    <div id="acc-badge" class="live-badge live-no">데이터 수집 중</div>
+  </div>
+  <div class="grid3" style="margin-top:12px">
+    <div class="card"><div class="label">총 청산</div><div class="value sm" id="acc-total">-</div></div>
+    <div class="card"><div class="label">수익 청산</div><div class="value sm pos" id="acc-win">-</div></div>
+    <div class="card"><div class="label">손실 청산</div><div class="value sm neg" id="acc-lose">-</div></div>
+  </div>
+  <div class="sec-title">패턴별 정확도</div>
+  <div id="pattern-list"></div>
+</div>
+
 <!-- ══ 나비효과 ══ -->
-<div id="tab-butterfly" class="tab-panel active">
+<div id="tab-butterfly" class="tab-panel">
   <div class="grid2" style="margin-bottom:10px">
-    <div class="card"><div class="label">이벤트 수집</div><div class="value" id="s-events">-</div></div>
-    <div class="card"><div class="label">체인 분석</div><div class="value" id="s-chains">-</div></div>
-    <div class="card"><div class="label">축적 패턴</div><div class="value" id="s-patterns">-</div></div>
-    <div class="card"><div class="label">신호 발생</div><div class="value" id="s-signals">-</div></div>
+    <div class="card"><div class="label">이벤트</div><div class="value" id="s-events">-</div></div>
+    <div class="card"><div class="label">체인</div><div class="value" id="s-chains">-</div></div>
+    <div class="card"><div class="label">패턴</div><div class="value" id="s-patterns">-</div></div>
+    <div class="card"><div class="label">신호</div><div class="value" id="s-signals">-</div></div>
   </div>
   <button class="btn btn-run" id="btn-run" onclick="runPipeline()">▶ 파이프라인 실행</button>
-  <div class="status" id="status"></div>
+  <div style="text-align:center;font-size:0.78rem;color:#8b949e;margin:4px 0 10px" id="status"></div>
 
   <div id="bf-wrap">
     <canvas id="bf-canvas"></canvas>
     <div id="bf-loading">파이프라인 실행 후 나비효과가 나타납니다</div>
     <div id="bf-legend">
-      <div class="leg-item"><div class="leg-dot" style="background:#388bfd;box-shadow:0 0 6px #388bfd"></div>글로벌 이벤트</div>
-      <div class="leg-item"><div class="leg-dot" style="background:#e3b341;box-shadow:0 0 6px #e3b341"></div>영향 섹터</div>
-      <div class="leg-item"><div class="leg-dot" style="background:#3fb950;box-shadow:0 0 6px #3fb950"></div>BUY 종목</div>
-      <div class="leg-item"><div class="leg-dot" style="background:#f85149;box-shadow:0 0 6px #f85149"></div>SELL 종목</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#388bfd;box-shadow:0 0 5px #388bfd"></div>이벤트 주제</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#e3b341;box-shadow:0 0 5px #e3b341"></div>영향 섹터</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#3fb950;box-shadow:0 0 5px #3fb950"></div>BUY</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#f85149;box-shadow:0 0 5px #f85149"></div>SELL</div>
     </div>
     <div id="bf-info">
       <div class="bi-type" id="bi-type"></div>
@@ -140,36 +178,6 @@ body { background: #0d1117; color: #e6edf3; font-family: -apple-system, sans-ser
       <div class="bi-sub" id="bi-sub"></div>
     </div>
   </div>
-</div>
-
-<!-- ══ 포트폴리오 ══ -->
-<div id="tab-portfolio" class="tab-panel">
-  <div class="grid2">
-    <div class="card"><div class="label">평가총액</div><div class="value sm" id="p-total">-</div></div>
-    <div class="card"><div class="label">보유현금</div><div class="value sm" id="p-cash">-</div></div>
-    <div class="card"><div class="label">투자금액</div><div class="value sm" id="p-invested">-</div></div>
-    <div class="card"><div class="label">누적수익률</div><div class="value sm" id="p-pnl-pct">-</div></div>
-  </div>
-  <div class="sec-title"><span>오픈 포지션</span><span id="p-open-cnt" style="color:#58a6ff;font-size:0.8rem"></span></div>
-  <div class="card" style="overflow-x:auto;padding:0">
-    <table class="pos-table">
-      <thead><tr><th>티어</th><th>종목</th><th>수량</th><th>매수가</th><th>현재가</th><th>목표/손절</th><th>손익</th></tr></thead>
-      <tbody id="positions-body"><tr><td colspan="7" class="empty">포지션 없음</td></tr></tbody>
-    </table>
-  </div>
-  <div class="sec-title">성과 지표</div>
-  <div class="grid2">
-    <div class="card"><div class="label">승률</div><div class="value sm" id="m-winrate">-</div></div>
-    <div class="card"><div class="label">Sharpe</div><div class="value sm" id="m-sharpe">-</div></div>
-    <div class="card"><div class="label">MDD</div><div class="value sm" id="m-mdd">-</div></div>
-    <div class="card"><div class="label">총 거래</div><div class="value sm" id="m-trades">-</div></div>
-  </div>
-</div>
-
-<!-- ══ 신호 ══ -->
-<div id="tab-signals" class="tab-panel">
-  <button class="btn btn-refresh" onclick="loadSignals()">↻ 새로고침</button>
-  <div id="signals-list"></div>
 </div>
 
 <!-- ══ 로그 ══ -->
@@ -191,17 +199,167 @@ function switchTab(name, btn) {
   document.querySelectorAll('.tab-nav button').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   btn.classList.add('active');
-  if (name === 'butterfly') { loadStats(); graph && graph.resize(); }
-  if (name === 'portfolio') { loadPortfolio(); loadMetrics(); }
-  if (name === 'signals')   loadSignals();
-  if (name === 'logs')      connectSSE();
+  if (name === 'portfolio')  { loadPortfolio(); loadMetrics(); }
+  if (name === 'history')    loadHistory();
+  if (name === 'accuracy')   loadAccuracy();
+  if (name === 'butterfly')  { loadStats(); graph && graph.resize(); }
+  if (name === 'logs')       connectSSE();
 }
 
 const fmt    = n => n == null ? '-' : Math.round(n).toLocaleString('ko-KR') + '원';
-const fmtPct = n => n == null ? '-' : (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
+const fmtPct = n => n == null ? '-' : (n >= 0 ? '+' : '') + Number(n).toFixed(2) + '%';
+const fmtDate = s => {
+  if (!s) return '-';
+  const d = new Date(s);
+  return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+};
+
+/* ══ 포트폴리오 ══ */
+async function loadPortfolio() {
+  try {
+    const d = await (await fetch(BASE+'/portfolio')).json();
+    document.getElementById('p-total').textContent    = fmt(d.current_value);
+    document.getElementById('p-cash').textContent     = fmt(d.cash);
+    document.getElementById('p-invested').textContent = fmt(d.invested);
+    const pEl = document.getElementById('p-pnl-pct');
+    pEl.textContent = fmtPct(d.total_pnl_pct);
+    pEl.className = 'value sm ' + (d.total_pnl_pct >= 0 ? 'pos' : 'neg');
+    const positions = d.positions || [];
+    document.getElementById('p-open-cnt').textContent = positions.length + '건';
+    const tbody = document.getElementById('positions-body');
+    if (!positions.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">포지션 없음</td></tr>'; return; }
+    const tl = {HIGH:'위험',MEDIUM:'중간',STABLE:'안정'};
+    tbody.innerHTML = positions.map(p => {
+      const cls = p.pnl_pct>=0?'pnl-pos':'pnl-neg', tier=p.risk_tier||'MEDIUM';
+      return `<tr>
+        <td><span class="badge badge-${tier}">${tl[tier]||tier}</span></td>
+        <td><b>${p.company||p.ticker}</b><br><span style="color:#8b949e;font-size:0.68rem">${p.ticker}</span></td>
+        <td>${p.qty}주</td><td>${fmt(p.entry_price)}</td><td>${fmt(p.current_price)}</td>
+        <td style="font-size:0.68rem;color:#8b949e">🎯${fmt(p.target_price)}<br>🛑${fmt(p.stop_loss)}</td>
+        <td class="${cls}">${fmtPct(p.pnl_pct)}<br><span style="font-size:0.68rem">${Math.round(p.pnl||0).toLocaleString()}원</span></td>
+      </tr>`;
+    }).join('');
+  } catch(e) { console.warn(e); }
+}
+
+async function loadMetrics() {
+  try {
+    const d = await (await fetch(BASE+'/metrics')).json();
+    document.getElementById('m-winrate').textContent = d.win_rate != null ? d.win_rate+'%' : '-';
+    document.getElementById('m-sharpe').textContent  = d.sharpe ?? '-';
+    document.getElementById('m-mdd').textContent     = d.mdd != null ? d.mdd+'%' : '-';
+    document.getElementById('m-trades').textContent  = d.total_trades != null ? d.total_trades+'건' : '-';
+  } catch(e) {}
+}
+
+/* ══ 매매이력 ══ */
+async function loadHistory() {
+  try {
+    const rows = await (await fetch(BASE+'/trades?limit=100')).json();
+    const tbody = document.getElementById('history-body');
+    if (!rows.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty">청산 거래 없음</td></tr>'; return; }
+    const tl = {HIGH:'위험',MEDIUM:'중간',STABLE:'안정'};
+    tbody.innerHTML = rows.map(r => {
+      const cls = r.pnl_pct>=0?'pnl-pos':'pnl-neg', tier=r.risk_tier||'MEDIUM';
+      const res = r.is_correct === true ? '✅' : r.is_correct === false ? '❌' : '-';
+      return `<tr>
+        <td style="font-size:0.7rem;color:#8b949e">${fmtDate(r.exited_at)}</td>
+        <td><b>${r.company||r.ticker}</b><br><span style="color:#8b949e;font-size:0.65rem">${r.ticker}</span></td>
+        <td><span class="badge badge-${tier}" style="font-size:0.62rem">${tl[tier]||tier}</span></td>
+        <td>${r.qty}주</td>
+        <td style="font-size:0.72rem">${fmt(r.entry_price)}</td>
+        <td style="font-size:0.72rem">${fmt(r.exit_price)}</td>
+        <td class="${cls}">${fmtPct(r.pnl_pct)}</td>
+        <td class="${cls}" style="font-size:0.72rem">${Math.round(r.pnl||0).toLocaleString()}원</td>
+        <td style="text-align:center;font-size:1rem">${res}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) { console.warn(e); }
+}
+
+/* ══ 신뢰도 ══ */
+async function loadAccuracy() {
+  try {
+    const d = await (await fetch(BASE+'/stats')).json();
+    const acc = d.accuracy_pct;
+    const total = d.closed_trades || 0;
+    document.getElementById('acc-total').textContent = total + '건';
+    if (acc == null) {
+      document.getElementById('acc-num').textContent = '-';
+      document.getElementById('acc-fill').style.width = '0%';
+      document.getElementById('acc-badge').textContent = '데이터 수집 중';
+      document.getElementById('acc-badge').className = 'live-badge live-no';
+      document.getElementById('acc-win').textContent = '-';
+      document.getElementById('acc-lose').textContent = '-';
+    } else {
+      document.getElementById('acc-num').textContent = acc.toFixed(1) + '%';
+      document.getElementById('acc-num').className = 'acc-num ' + (acc >= 80 ? 'pos' : acc >= 60 ? '' : 'neg');
+      document.getElementById('acc-fill').style.width = Math.min(acc, 100) + '%';
+      const win = Math.round(total * acc / 100);
+      document.getElementById('acc-win').textContent = win + '건';
+      document.getElementById('acc-lose').textContent = (total - win) + '건';
+      if (d.live_ready) {
+        document.getElementById('acc-badge').textContent = '🚀 실전 준비 완료';
+        document.getElementById('acc-badge').className = 'live-badge live-yes';
+      } else {
+        document.getElementById('acc-badge').textContent = `목표까지 ${(80 - acc).toFixed(1)}% 남음`;
+        document.getElementById('acc-badge').className = 'live-badge live-no';
+      }
+    }
+  } catch(e) { console.warn(e); }
+
+  try {
+    const patterns = await (await fetch(BASE+'/patterns?limit=10')).json();
+    const el = document.getElementById('pattern-list');
+    if (!patterns.length) { el.innerHTML = '<div class="empty">패턴 없음</div>'; return; }
+    el.innerHTML = patterns.map(p => {
+      const acc = p.accuracy || 0;
+      const bar = Math.min(acc * 100, 100).toFixed(0);
+      return `<div class="card" style="margin-bottom:8px;padding:10px">
+        <div style="display:flex;justify-content:space-between;font-size:0.8rem">
+          <span>${(p.sectors||[]).join(', ') || '패턴 '+p.id}</span>
+          <span class="${acc>=0.8?'pos':acc>=0.6?'':'neg'}">${(acc*100).toFixed(1)}%</span>
+        </div>
+        <div class="conf-bar" style="margin-top:6px"><div class="conf-fill" style="width:${bar}%;background:${acc>=0.8?'#3fb950':acc>=0.6?'#e3b341':'#f85149'}"></div></div>
+        <div style="font-size:0.68rem;color:#8b949e;margin-top:4px">발생 ${p.occurrences}회 · 신뢰도 ${((p.avg_confidence||0)*100).toFixed(0)}%</div>
+      </div>`;
+    }).join('');
+  } catch(e) {}
+}
+
+/* ══ 통계 ══ */
+async function loadStats() {
+  try {
+    const d = await (await fetch(BASE+'/stats')).json();
+    document.getElementById('s-events').textContent   = d.events||0;
+    document.getElementById('s-chains').textContent   = d.chains||0;
+    document.getElementById('s-signals').textContent  = d.signals||0;
+    document.getElementById('s-patterns').textContent = d.patterns||0;
+  } catch(e) {}
+}
+
+/* ══ 파이프라인 ══ */
+async function runPipeline() {
+  const btn = document.getElementById('btn-run');
+  btn.disabled = true; btn.textContent = '⏳ 실행 중...';
+  document.getElementById('status').textContent = '파이프라인 시작됨...';
+  try { await fetch(BASE+'/run'); } catch(e) {}
+  setTimeout(() => { btn.disabled=false; btn.textContent='▶ 파이프라인 실행'; }, 5000);
+}
+
+async function wakeBriefing() {
+  const btn = event.target;
+  const orig = btn.textContent;
+  btn.textContent = '⏳...'; btn.disabled = true;
+  try {
+    await fetch(BASE+'/briefing');
+    btn.textContent = '✅ 전송됨';
+    setTimeout(() => { btn.textContent=orig; btn.disabled=false; }, 3000);
+  } catch(e) { btn.textContent = '❌'; btn.disabled=false; }
+}
 
 /* ════════════════════════════════════
-   🦋 포스 그래프 시뮬레이션
+   🦋 나비효과 그래프 (축소 버전)
 ════════════════════════════════════ */
 class ButterflyGraph {
   constructor(canvas) {
@@ -209,8 +367,8 @@ class ButterflyGraph {
     this.ctx = canvas.getContext('2d');
     this.nodes = new Map();
     this.edges = [];
-    this.stars = this._genStars(200);
-    this.nebulae = this._genNebulae(5);
+    this.stars = this._genStars(150);
+    this.nebulae = this._genNebulae(4);
     this.running = false;
     this.hovered = null;
     this.t = 0;
@@ -231,8 +389,8 @@ class ButterflyGraph {
   _genStars(n) {
     return Array.from({length:n}, () => ({
       x: Math.random(), y: Math.random(),
-      r: Math.random() * 1.2 + 0.3,
-      a: Math.random() * 0.5 + 0.15,
+      r: Math.random() * 1.0 + 0.2,
+      a: Math.random() * 0.4 + 0.1,
       spd: Math.random() * 2 + 1,
     }));
   }
@@ -240,30 +398,30 @@ class ButterflyGraph {
   _genNebulae(n) {
     return Array.from({length:n}, () => ({
       x: Math.random(), y: Math.random(),
-      r: Math.random() * 200 + 100,
+      r: Math.random() * 150 + 80,
       color: ['#0d2040','#1a0d20','#0d1a10','#201a0d','#0a0a2a'][Math.floor(Math.random()*5)],
     }));
   }
 
   load(chains) {
-    /* 노드 누적: clear 하지 않고 새 노드만 추가 */
     document.getElementById('bf-loading').style.display = 'none';
 
     const ETYPE = {
       '통화정책':'💵 통화정책','무역':'🤝 무역','지정학':'⚔️ 지정학',
       '기업실적':'📊 기업실적','원자재':'🛢 원자재','자연재해':'🌪 자연재해',
+      '금리':'💵 금리','환율':'💱 환율','규제':'📜 규제',
     };
 
     const add = (id, data) => {
       if (!this.nodes.has(id)) {
         const angle = Math.random() * Math.PI * 2;
-        const dist  = Math.min(this.W, this.H) * 0.48;
+        const dist  = Math.min(this.W, this.H) * 0.42;
         const x = this.W/2 + Math.cos(angle) * dist;
         const y = this.H/2 + Math.sin(angle) * dist;
         this.nodes.set(id, {
           id, ...data, x, y,
-          vx: (this.W/2 - x) * 0.06 + (Math.random()-.5)*4,
-          vy: (this.H/2 - y) * 0.06 + (Math.random()-.5)*4,
+          vx: (this.W/2 - x) * 0.06 + (Math.random()-.5)*3,
+          vy: (this.H/2 - y) * 0.06 + (Math.random()-.5)*3,
           pulse: Math.random() * Math.PI * 2,
         });
       }
@@ -272,24 +430,26 @@ class ButterflyGraph {
     chains.forEach(chain => {
       const evId = `ev-${chain.id}`;
       const cd = chain.chain || {};
-      /* 이벤트 노드: event_type(대분류) 우선, 없으면 source */
-      const rawType = cd.event_type || '';
-      const evLabel = ETYPE[rawType] || (chain.event_source||'이벤트').toUpperCase();
-      const evSub   = cd.summary ? cd.summary.slice(0,24) : (chain.event||'').slice(0,24);
-      add(evId, {
-        type:'event', label: evLabel,
-        sub: evSub,
-        r:18, color:'#388bfd', glow:'#1a6fff',
-      });
-
       const sectors = _parseSectors(cd);
       const signals = _parseSignals(cd);
+
+      /* 이벤트 노드: 첫 번째 섹터명 우선, 없으면 event_type, 없으면 summary 앞 6자 */
+      const rawType = cd.event_type || '';
+      const firstSec = sectors.length > 0 ? sectors[0].name : null;
+      const evLabel = firstSec || ETYPE[rawType] || (cd.summary||'').slice(0,7) || '이벤트';
+      const evSub   = cd.summary ? cd.summary.slice(0,20) : (chain.event||'').slice(0,20);
+
+      add(evId, {
+        type:'event', label: evLabel, sub: evSub,
+        r: 11, color:'#388bfd', glow:'#1a6fff',
+      });
 
       sectors.forEach(sec => {
         const sid = `sec-${sec.name}`;
         add(sid, {
-          type:'sector', label:sec.name, sub: sec.reason ? sec.reason.slice(0,20) : '',
-          r:13, color:'#e3b341', glow:'#ffaa00',
+          type:'sector', label:sec.name,
+          sub: sec.reason ? sec.reason.slice(0,18) : '',
+          r: 8, color:'#e3b341', glow:'#ffaa00',
           impact: sec.impact,
         });
         this._addEdge(evId, sid, sec.impact === 'negative' ? '#f85149' : '#3fb950');
@@ -299,12 +459,11 @@ class ButterflyGraph {
           const dir  = (sig.direction||'BUY').toLowerCase();
           add(stid, {
             type:'stock', label: sig.ticker||'',
-            sub: (sig.company_name||sig.name||'').slice(0,10),
-            r:8, color: dir==='buy'?'#3fb950':'#f85149',
+            sub: (sig.company_name||sig.name||'').slice(0,8),
+            r: 5, color: dir==='buy'?'#3fb950':'#f85149',
             glow: dir==='buy'?'#00dd44':'#ff2233',
             direction: dir, conf: sig.confidence||0.5,
           });
-          /* 섹터 → 종목 연결 (순서 기반 분배) */
           const si = Math.floor(i / Math.max(1, Math.ceil(signals.length / sectors.length)));
           if (si === sectors.indexOf(sec) || sectors.length <= 1) {
             this._addEdge(sid, stid, dir==='buy'?'#3fb950':'#f85149');
@@ -312,15 +471,14 @@ class ButterflyGraph {
         });
       });
 
-      /* 섹터 없으면 이벤트 → 종목 직결 */
       if (!sectors.length) {
         signals.forEach((sig, i) => {
           const stid = `st-${sig.ticker||chain.id+'-'+i}`;
           const dir  = (sig.direction||'BUY').toLowerCase();
           add(stid, {
             type:'stock', label:sig.ticker||'',
-            sub:(sig.company_name||sig.name||'').slice(0,10),
-            r:8, color:dir==='buy'?'#3fb950':'#f85149',
+            sub:(sig.company_name||sig.name||'').slice(0,8),
+            r:5, color:dir==='buy'?'#3fb950':'#f85149',
             glow:dir==='buy'?'#00dd44':'#ff2233',
             direction:dir, conf:sig.confidence||0.5,
           });
@@ -333,7 +491,6 @@ class ButterflyGraph {
   }
 
   _addEdge(from, to, color) {
-    /* 중복 엣지 방지 */
     if (!this.edges.find(e => e.from===from && e.to===to)) {
       this.edges.push({ from, to, color,
         pts: [Math.random(), Math.random()+0.33, Math.random()+0.67].map(p => p%1),
@@ -342,7 +499,6 @@ class ButterflyGraph {
   }
 
   _start() { this.running = true; this._tick(); }
-  _stop()  { this.running = false; }
 
   _tick() {
     if (!this.running) return;
@@ -356,70 +512,59 @@ class ButterflyGraph {
     const ns = [...this.nodes.values()];
     const W = this.W, H = this.H;
 
-    /* 반발력 */
     for (let i = 0; i < ns.length; i++) {
       for (let j = i+1; j < ns.length; j++) {
         const a = ns[i], b = ns[j];
         const dx = b.x-a.x, dy = b.y-a.y;
         const d2 = dx*dx + dy*dy || 1;
         const d  = Math.sqrt(d2);
-        const f  = 2200 / d2;
+        const f  = 1800 / d2;
         const fx = dx/d*f, fy = dy/d*f;
         a.vx -= fx; a.vy -= fy;
         b.vx += fx; b.vy += fy;
       }
     }
 
-    /* 스프링 인력 */
     this.edges.forEach(e => {
       const a = this.nodes.get(e.from), b = this.nodes.get(e.to);
       if (!a || !b) return;
       const dx = b.x-a.x, dy = b.y-a.y;
       const d = Math.sqrt(dx*dx+dy*dy) || 1;
-      const target = (a.r + b.r) * 3.5 + 55;
-      const f = (d - target) * 0.028;
+      const target = (a.r + b.r) * 3 + 45;
+      const f = (d - target) * 0.025;
       a.vx += dx/d*f; a.vy += dy/d*f;
       b.vx -= dx/d*f; b.vy -= dy/d*f;
     });
 
-    /* 중심 인력 */
-    ns.forEach(n => { n.vx += (W/2-n.x)*0.0018; n.vy += (H/2-n.y)*0.0018; });
+    ns.forEach(n => { n.vx += (W/2-n.x)*0.0015; n.vy += (H/2-n.y)*0.0015; });
 
-    /* 적분 + 감쇄 + 경계 */
     ns.forEach(n => {
-      n.vx *= 0.86; n.vy *= 0.86;
-      n.x = Math.max(n.r+8, Math.min(W-n.r-8, n.x+n.vx));
-      n.y = Math.max(n.r+8, Math.min(H-n.r-8, n.y+n.vy));
-      n.pulse += 0.035;
+      n.vx *= 0.85; n.vy *= 0.85;
+      n.x = Math.max(n.r+6, Math.min(W-n.r-6, n.x+n.vx));
+      n.y = Math.max(n.r+6, Math.min(H-n.r-6, n.y+n.vy));
+      n.pulse += 0.03;
     });
 
-    /* 파티클 이동 */
-    this.edges.forEach(e => {
-      e.pts = e.pts.map(p => (p + 0.0035) % 1);
-    });
+    this.edges.forEach(e => { e.pts = e.pts.map(p => (p + 0.004) % 1); });
   }
 
   _draw() {
     const ctx = this.ctx;
     const W = this.W, H = this.H;
-    const t = this.t;
 
-    /* 배경 — 잔상 효과 */
-    ctx.fillStyle = 'rgba(2,4,8,0.22)';
+    ctx.fillStyle = 'rgba(2,4,8,0.25)';
     ctx.fillRect(0,0,W,H);
 
-    /* 성운 */
     this.nebulae.forEach(n => {
       const grd = ctx.createRadialGradient(n.x*W, n.y*H, 0, n.x*W, n.y*H, n.r);
-      grd.addColorStop(0, n.color+'cc');
+      grd.addColorStop(0, n.color+'99');
       grd.addColorStop(1, 'transparent');
       ctx.fillStyle = grd;
       ctx.fillRect(0,0,W,H);
     });
 
-    /* 별 */
     this.stars.forEach(s => {
-      const tw = Math.sin(t * 0.02 * s.spd + s.x * 100) * 0.3 + 0.7;
+      const tw = Math.sin(this.t * 0.02 * s.spd + s.x * 100) * 0.3 + 0.7;
       ctx.beginPath();
       ctx.arc(s.x*W, s.y*H, s.r, 0, Math.PI*2);
       ctx.fillStyle = `rgba(180,210,255,${s.a * tw})`;
@@ -428,18 +573,14 @@ class ButterflyGraph {
 
     const hov = this.hovered;
 
-    /* ── 엣지 ── */
     this.edges.forEach(e => {
       const a = this.nodes.get(e.from), b = this.nodes.get(e.to);
       if (!a || !b) return;
       const hi = hov && (hov.id===e.from || hov.id===e.to);
+      const mx = (a.x+b.x)/2 + (b.y-a.y)*0.15;
+      const my = (a.y+b.y)/2 - (b.x-a.x)*0.15;
 
-      /* 베지어 제어점 — 살짝 휘게 */
-      const mx = (a.x+b.x)/2 + (b.y-a.y)*0.18;
-      const my = (a.y+b.y)/2 - (b.x-a.x)*0.18;
-
-      /* 글로우 라인 (3겹) */
-      [[6, 0.04],[2.5, 0.12],[1, hi?0.55:0.25]].forEach(([w, alpha]) => {
+      [[5,0.03],[2,0.1],[1,hi?0.5:0.2]].forEach(([w,alpha]) => {
         ctx.save();
         ctx.beginPath();
         ctx.moveTo(a.x, a.y);
@@ -450,75 +591,65 @@ class ButterflyGraph {
         ctx.restore();
       });
 
-      /* 파티클 3개 */
       e.pts.forEach((p, pi) => {
-        const tt = p;
-        const px = (1-tt)*(1-tt)*a.x + 2*(1-tt)*tt*mx + tt*tt*b.x;
-        const py = (1-tt)*(1-tt)*a.y + 2*(1-tt)*tt*my + tt*tt*b.y;
-        const pr = pi === 0 ? 3 : 2;
+        const px = (1-p)*(1-p)*a.x + 2*(1-p)*p*mx + p*p*b.x;
+        const py = (1-p)*(1-p)*a.y + 2*(1-p)*p*my + p*p*b.y;
         ctx.save();
-        ctx.shadowColor = e.color;
-        ctx.shadowBlur  = 12;
+        ctx.shadowColor = e.color; ctx.shadowBlur = 8;
         ctx.beginPath();
-        ctx.arc(px, py, pr, 0, Math.PI*2);
+        ctx.arc(px, py, pi===0?2.5:1.5, 0, Math.PI*2);
         ctx.fillStyle = e.color;
         ctx.fill();
         ctx.restore();
       });
     });
 
-    /* ── 노드 ── */
     [...this.nodes.values()].forEach(n => {
-      const pulse = 1 + Math.sin(n.pulse) * 0.12;
+      const pulse = 1 + Math.sin(n.pulse) * 0.1;
       const r = n.r * pulse;
       const hi = hov && hov.id === n.id;
       const dim = hov && !hi &&
         !this.edges.some(e => (e.from===hov.id||e.to===hov.id) && (e.from===n.id||e.to===n.id));
 
       ctx.save();
-      ctx.globalAlpha = dim ? 0.25 : 1;
+      ctx.globalAlpha = dim ? 0.2 : 1;
 
-      /* 외곽 후광 */
       ctx.beginPath();
-      ctx.arc(n.x, n.y, r + (hi?10:5), 0, Math.PI*2);
-      const haloGrd = ctx.createRadialGradient(n.x,n.y,r,n.x,n.y,r+(hi?10:5));
-      haloGrd.addColorStop(0, n.glow + (hi?'55':'22'));
+      ctx.arc(n.x, n.y, r + (hi?7:3), 0, Math.PI*2);
+      const haloGrd = ctx.createRadialGradient(n.x,n.y,r,n.x,n.y,r+(hi?7:3));
+      haloGrd.addColorStop(0, n.glow + (hi?'44':'18'));
       haloGrd.addColorStop(1, 'transparent');
       ctx.fillStyle = haloGrd;
       ctx.fill();
 
-      /* 노드 본체 */
       ctx.shadowColor = n.glow;
-      ctx.shadowBlur  = hi ? 30 : 18;
+      ctx.shadowBlur  = hi ? 22 : 12;
       ctx.beginPath();
       ctx.arc(n.x, n.y, r, 0, Math.PI*2);
       ctx.fillStyle = n.color + 'dd';
       ctx.fill();
 
-      /* 내부 하이라이트 */
       ctx.shadowBlur = 0;
       const ig = ctx.createRadialGradient(n.x-r*.3,n.y-r*.35,0,n.x,n.y,r);
-      ig.addColorStop(0, 'rgba(255,255,255,0.55)');
+      ig.addColorStop(0, 'rgba(255,255,255,0.5)');
       ig.addColorStop(1, 'rgba(255,255,255,0)');
       ctx.fillStyle = ig;
       ctx.beginPath();
       ctx.arc(n.x, n.y, r, 0, Math.PI*2);
       ctx.fill();
-
       ctx.restore();
 
-      /* 라벨 */
       if (!dim) {
         ctx.save();
-        ctx.shadowColor = '#000'; ctx.shadowBlur = 4;
+        ctx.shadowColor = '#000'; ctx.shadowBlur = 3;
         ctx.textAlign = 'center';
-        ctx.font = `bold ${n.type==='event'?11:9}px -apple-system,sans-serif`;
+        ctx.font = `bold ${n.type==='event'?10:8}px -apple-system,sans-serif`;
         ctx.fillStyle = hi ? '#fff' : '#c9d1d9';
-        ctx.fillText(n.label, n.x, n.y + r + 13);
-        if (n.sub) {
-          ctx.font = '8px -apple-system,sans-serif';
+        ctx.fillText(n.label, n.x, n.y + r + 11);
+        if (n.sub && hi) {
+          ctx.font = '7px -apple-system,sans-serif';
           ctx.fillStyle = '#6e7681';
-          ctx.fillText(n.sub, n.x, n.y + r + 23);
+          ctx.fillText(n.sub, n.x, n.y + r + 20);
         }
         ctx.restore();
       }
@@ -532,7 +663,7 @@ class ButterflyGraph {
     let closest = null, minD = 999;
     this.nodes.forEach(n => {
       const d = Math.hypot(n.x-mx, n.y-my);
-      if (d < n.r + 12 && d < minD) { minD = d; closest = n; }
+      if (d < n.r + 10 && d < minD) { minD = d; closest = n; }
     });
     this.hovered = closest;
     this.canvas.style.cursor = closest ? 'pointer' : 'default';
@@ -540,11 +671,11 @@ class ButterflyGraph {
     else this._hideInfo();
   }
 
-  _onClick(e) { /* 호버 노드 고정 선택 — 추후 확장 */ }
+  _onClick(e) {}
 
   _showInfo(n) {
     const el = document.getElementById('bf-info');
-    const typeMap = { event:'글로벌 이벤트', sector:'영향 섹터', stock:'매매 종목' };
+    const typeMap = { event:'이벤트 주제', sector:'영향 섹터', stock:'매매 종목' };
     document.getElementById('bi-type').textContent  = typeMap[n.type] || n.type;
     document.getElementById('bi-label').textContent = n.label;
     document.getElementById('bi-sub').textContent   = n.sub || (n.conf ? `신뢰도 ${(n.conf*100).toFixed(0)}%` : '');
@@ -554,7 +685,6 @@ class ButterflyGraph {
   _hideInfo() { document.getElementById('bf-info').style.display = 'none'; }
 }
 
-/* ── 파싱 헬퍼 ── */
 function _parseSectors(cd) {
   let s = cd.sectors_affected || cd.sectors || cd.affected_sectors || [];
   if (typeof s === 'string') try { s = JSON.parse(s); } catch{ s=[]; }
@@ -569,103 +699,17 @@ function _parseSignals(cd) {
   return Array.isArray(s) ? s : [];
 }
 
-/* ── 그래프 인스턴스 ── */
 let graph = null;
 function initGraph() {
-  const canvas = document.getElementById('bf-canvas');
-  graph = new ButterflyGraph(canvas);
+  graph = new ButterflyGraph(document.getElementById('bf-canvas'));
   window.addEventListener('resize', () => graph.resize());
 }
 
 async function loadChains() {
   try {
-    const r = await fetch(BASE + '/chains?limit=20');
-    const chains = await r.json();
+    const chains = await (await fetch(BASE+'/chains?limit=20')).json();
     if (chains.length && graph) graph.load(chains);
-  } catch(e) { console.warn(e); }
-}
-
-/* ══ 포트폴리오 ══ */
-async function loadPortfolio() {
-  const r = await fetch(BASE + '/portfolio');
-  const d = await r.json();
-  document.getElementById('p-total').textContent    = fmt(d.current_value);
-  document.getElementById('p-cash').textContent     = fmt(d.cash);
-  document.getElementById('p-invested').textContent = fmt(d.invested);
-  const pEl = document.getElementById('p-pnl-pct');
-  pEl.textContent = fmtPct(d.total_pnl_pct);
-  pEl.className = 'value sm ' + (d.total_pnl_pct >= 0 ? 'pos' : 'neg');
-  const positions = d.positions || [];
-  document.getElementById('p-open-cnt').textContent = positions.length + '건';
-  const tbody = document.getElementById('positions-body');
-  if (!positions.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">포지션 없음</td></tr>'; return; }
-  const tl = {HIGH:'위험',MEDIUM:'중간',STABLE:'안정'};
-  tbody.innerHTML = positions.map(p => {
-    const cls = p.pnl_pct>=0?'pnl-pos':'pnl-neg', tier=p.risk_tier||'MEDIUM';
-    return `<tr>
-      <td><span class="badge badge-${tier}">${tl[tier]||tier}</span></td>
-      <td><b>${p.company||p.ticker}</b><br><span style="color:#8b949e;font-size:0.68rem">${p.ticker}</span></td>
-      <td>${p.qty}주</td><td>${fmt(p.entry_price)}</td><td>${fmt(p.current_price)}</td>
-      <td style="font-size:0.68rem;color:#8b949e">🎯${fmt(p.target_price)}<br>🛑${fmt(p.stop_loss)}</td>
-      <td class="${cls}">${fmtPct(p.pnl_pct)}<br><span style="font-size:0.68rem">${Math.round(p.pnl||0).toLocaleString()}원</span></td>
-    </tr>`;
-  }).join('');
-}
-async function loadMetrics() {
-  try {
-    const d = await (await fetch(BASE+'/metrics')).json();
-    document.getElementById('m-winrate').textContent = d.win_rate+'%';
-    document.getElementById('m-sharpe').textContent  = d.sharpe;
-    document.getElementById('m-mdd').textContent     = d.mdd+'%';
-    document.getElementById('m-trades').textContent  = d.total_trades+'건';
   } catch(e) {}
-}
-
-/* ══ 신호 ══ */
-async function loadSignals() {
-  const list = await (await fetch(BASE+'/signals?limit=20')).json();
-  const el = document.getElementById('signals-list');
-  if (!list.length) { el.innerHTML = '<div class="empty">신호 없음</div>'; return; }
-  el.innerHTML = list.map(s => `
-    <div class="signal ${(s.direction||'').toLowerCase()}">
-      <div class="ticker">${s.company||s.ticker} <span style="color:#8b949e;font-size:0.75rem">${s.ticker}</span>
-        <span class="badge badge-${(s.direction||'').toLowerCase()}" style="float:right">${s.direction}</span>
-        ${s.executed?'<span class="badge" style="background:#1a2a3a;color:#58a6ff;float:right;margin-right:6px">✅완료</span>':''}
-      </div>
-      <div class="conf-bar"><div class="conf-fill" style="width:${((s.confidence||0)*100).toFixed(0)}%"></div></div>
-      <div class="meta">신뢰도 ${((s.confidence||0)*100).toFixed(0)}%</div>
-    </div>`).join('');
-}
-
-/* ══ 통계 ══ */
-async function loadStats() {
-  const d = await (await fetch(BASE+'/stats')).json();
-  document.getElementById('s-events').textContent   = d.events||0;
-  document.getElementById('s-chains').textContent   = d.chains||0;
-  document.getElementById('s-signals').textContent  = d.signals||0;
-  document.getElementById('s-patterns').textContent = d.patterns||0;
-}
-
-/* ══ 파이프라인 ══ */
-async function runPipeline() {
-  const btn = document.getElementById('btn-run');
-  btn.disabled = true; btn.textContent = '⏳ 실행 중...';
-  document.getElementById('status').textContent = '파이프라인 시작됨...';
-  try { await fetch(BASE+'/run'); } catch(e) {}
-  setTimeout(() => { btn.disabled=false; btn.textContent='▶ 파이프라인 실행'; }, 5000);
-}
-
-async function wakeBriefing() {
-  const btn = event.target;
-  const orig = btn.textContent;
-  btn.textContent = '⏳...'; btn.disabled = true;
-  try {
-    await fetch(BASE+'/briefing');
-    btn.textContent = '✅ 전송됨';
-    setTimeout(() => { btn.textContent=orig; btn.disabled=false; }, 3000);
-  } catch(e) {
-    btn.textContent = '❌'; btn.disabled=false;
-  }
 }
 
 /* ══ SSE ══ */
@@ -685,16 +729,21 @@ function connectSSE() {
     box.scrollTop = box.scrollHeight;
     if (e.data.includes('파이프라인 완료')) { loadStats(); loadChains(); }
   };
-  es.onerror = () => { document.getElementById('dot').classList.add('off'); es=null; setTimeout(connectSSE,3000); };
+  es.onerror = () => {
+    document.getElementById('dot').classList.add('off');
+    es = null;
+    setTimeout(connectSSE, 3000);
+  };
 }
-function clearLog() { document.getElementById('log-box').innerHTML=''; }
+function clearLog() { document.getElementById('log-box').innerHTML = ''; }
 
 /* ── 초기화 ── */
 initGraph();
-loadStats();
+loadPortfolio();
+loadMetrics();
 loadChains();
 connectSSE();
-setInterval(loadStats, 60000);
+setInterval(() => { loadPortfolio(); loadStats(); }, 60000);
 </script>
 </body>
 </html>
