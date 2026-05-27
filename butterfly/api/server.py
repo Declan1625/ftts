@@ -205,7 +205,7 @@ def dashboard():
     return html.read_text(encoding="utf-8")
 
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 def health():
     return {"status": "ok"}
 

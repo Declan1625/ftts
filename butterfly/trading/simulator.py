@@ -118,10 +118,10 @@ def run_simulation(session: Session) -> int:
 
         if t.target_price and price >= t.target_price:
             _close(t, price, True, portfolio, session)
-            logger.info("🎯 목표 청산: %s +%.1f%% (+%,.0f원)", t.ticker, t.pnl_pct, t.pnl)
+            logger.info("🎯 목표 청산: %s +%.1f%% (+%.0f원)", t.ticker, t.pnl_pct, t.pnl)
         elif t.stop_loss_price and price <= t.stop_loss_price:
             _close(t, price, False, portfolio, session)
-            logger.info("🛑 손절 청산: %s %.1f%% (%,.0f원)", t.ticker, t.pnl_pct, t.pnl)
+            logger.info("🛑 손절 청산: %s %.1f%% (%.0f원)", t.ticker, t.pnl_pct, t.pnl)
 
     session.commit()
 
@@ -137,7 +137,7 @@ def run_simulation(session: Session) -> int:
                 if price:
                     open_trade.pnl = (price - open_trade.price_at_entry) * open_trade.quantity
                     _close(open_trade, price, open_trade.pnl >= 0, portfolio, session)
-                    logger.info("📉 SELL신호 청산: %s @%,.0f원", open_trade.ticker, price)
+                    logger.info("📉 SELL신호 청산: %s @%.0f원", open_trade.ticker, price)
             sig.executed = True
             continue
 
@@ -180,7 +180,7 @@ def run_simulation(session: Session) -> int:
 
         # 1주 가격이 예산 초과면 스킵
         if price > position_budget:
-            logger.info("💰 1주(%,.0f원) > 예산(%,.0f원) - %s 스킵", price, position_budget, sig.ticker)
+            logger.info("💰 1주(%.0f원) > 예산(%.0f원) - %s 스킵", price, position_budget, sig.ticker)
             sig.executed = True
             continue
 
@@ -219,7 +219,7 @@ def run_simulation(session: Session) -> int:
         executed += 1
 
         logger.info(
-            "📈 [%s] 매수: %s %d주 @%,.0f원 | 목표%+.0f%% | 손절-%0.f%% | 잔액%,.0f원",
+            "📈 [%s] 매수: %s %d주 @%.0f원 | 목표%+.0f%% | 손절-%.0f%% | 잔액%.0f원",
             tier, sig.ticker, qty, price,
             cfg["target"] * 100, cfg["stop"] * 100, portfolio.cash,
         )
@@ -257,7 +257,7 @@ def _log_summary(session: Session, portfolio: Portfolio):
     for t in open_trades:
         tier_cnt[t.risk_tier] = tier_cnt.get(t.risk_tier, 0) + 1
     logger.info(
-        "💼 포트폴리오 | 총평가 %,.0f원 | 현금 %,.0f원 | 수익률 %+.2f%% | 포지션 %s",
+        "💼 포트폴리오 | 총평가 %.0f원 | 현금 %.0f원 | 수익률 %+.2f%% | 포지션 %s",
         total, portfolio.cash, pnl_pct,
         " ".join(f"{k}:{v}건" for k, v in tier_cnt.items()) or "없음",
     )
