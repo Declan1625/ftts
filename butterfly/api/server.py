@@ -192,19 +192,24 @@ async def morning_briefing():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    from butterfly.db.manager import DATABASE_URL
+    db_type = "PostgreSQL" if "postgresql" in DATABASE_URL else "SQLite(⚠️ 재시작시 초기화됨)"
+    logger.info("🗄️  DB: %s", db_type)
     init_db()
-    scheduler.add_job(run_pipeline, "interval", minutes=30, id="pipeline")
-    scheduler.add_job(monitor_positions, "interval", minutes=5, id="position_monitor")
-    # 매일 오전 8시 KST 일간 브리핑
+    scheduler.add_job(run_pipeline, "interval", minutes=30, id="pipeline",
+                      max_instances=1, misfire_grace_time=60)
+    scheduler.add_job(monitor_positions, "interval", minutes=5, id="position_monitor",
+                      max_instances=1, misfire_grace_time=30)
     scheduler.add_job(
         morning_briefing, "cron",
         hour=8, minute=0,
         timezone="Asia/Seoul",
         day_of_week="mon-fri",
         id="morning_briefing",
+        max_instances=1,
     )
     scheduler.start()
-    logger.info("나비효과 AI 시작 - 5분 포지션 모니터링 + 30분 파이프라인 + 08:00 브리핑")
+    logger.info("🦋 나비효과 AI 시작 — DB:%s | 5분모니터링 | 30분파이프라인 | 08:00브리핑", db_type)
     yield
     scheduler.shutdown()
 
