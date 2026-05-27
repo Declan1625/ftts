@@ -228,6 +228,10 @@ def health():
 def stats():
     s = get_session()
     try:
+        closed = s.query(Trade).filter_by(status="closed").all()
+        total_closed = len(closed)
+        correct = sum(1 for t in closed if t.is_correct)
+        accuracy = round(correct / total_closed * 100, 1) if total_closed else None
         return {
             "events": s.query(func.count(Event.id)).scalar(),
             "chains": s.query(func.count(ButterflyChain.id)).scalar(),
@@ -235,6 +239,9 @@ def stats():
             "trades": s.query(func.count(Trade.id)).scalar(),
             "pending_events": s.query(func.count(Event.id)).filter_by(processed=False).scalar(),
             "patterns": s.query(func.count(CausalPattern.id)).scalar(),
+            "closed_trades": total_closed,
+            "accuracy_pct": accuracy,          # null = 청산 거래 없음
+            "live_ready": accuracy is not None and accuracy >= 80.0,
         }
     finally:
         s.close()
