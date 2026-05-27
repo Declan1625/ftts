@@ -1,5 +1,5 @@
 sqlalchemy==2.0.48
-psycopg2-binary==2.9.9
+pg8000
 python-dotenv==1.0.0
 networkx==3.2
 anthropic>=0.50.0

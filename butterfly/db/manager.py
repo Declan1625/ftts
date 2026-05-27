@@ -7,8 +7,13 @@ import os
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./butterfly.db")
 
+# pg8000 드라이버 사용 (Python 3.14 호환, 순수 Python)
+_engine_url = DATABASE_URL
+if _engine_url.startswith("postgresql://"):
+    _engine_url = _engine_url.replace("postgresql://", "postgresql+pg8000://", 1)
+
 engine = create_engine(
-    DATABASE_URL,
+    _engine_url,
     connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {},
     poolclass=NullPool,
 )
