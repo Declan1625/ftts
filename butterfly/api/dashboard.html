@@ -127,8 +127,8 @@ body { background: #0d1117; color: #e6edf3; font-family: -apple-system, sans-ser
 <div id="tab-history" class="tab-panel">
   <div class="card" style="overflow-x:auto;padding:0">
     <table class="pos-table">
-      <thead><tr><th>날짜</th><th>종목</th><th>티어</th><th>수량</th><th>매수가</th><th>매도가</th><th>수익률</th><th>손익</th><th>결과</th></tr></thead>
-      <tbody id="history-body"><tr><td colspan="9" class="empty">청산 거래 없음</td></tr></tbody>
+      <thead><tr><th>매수일</th><th>종목</th><th>티어</th><th>수량</th><th>매수가</th><th>매도가</th><th>수익률</th><th>손익</th><th>상태</th></tr></thead>
+      <tbody id="history-body"><tr><td colspan="9" class="empty">거래 내역 없음</td></tr></tbody>
     </table>
   </div>
 </div>
@@ -260,21 +260,28 @@ async function loadHistory() {
   try {
     const rows = await (await fetch(BASE+'/trades?limit=100')).json();
     const tbody = document.getElementById('history-body');
-    if (!rows.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty">청산 거래 없음</td></tr>'; return; }
+    if (!rows.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty">거래 내역 없음</td></tr>'; return; }
     const tl = {HIGH:'위험',MEDIUM:'중간',STABLE:'안정'};
     tbody.innerHTML = rows.map(r => {
-      const cls = r.pnl_pct>=0?'pnl-pos':'pnl-neg', tier=r.risk_tier||'MEDIUM';
-      const res = r.is_correct === true ? '✅' : r.is_correct === false ? '❌' : '-';
+      const isOpen = r.status === 'open';
+      const cls = r.pnl_pct >= 0 ? 'pnl-pos' : 'pnl-neg';
+      const tier = r.risk_tier || 'MEDIUM';
+      const exitPrice = isOpen
+        ? `<span style="color:#8b949e;font-size:0.65rem">보유중<br>${fmt(r.current_price)}</span>`
+        : fmt(r.exit_price);
+      const statusCell = isOpen
+        ? `<span style="color:#e3b341;font-weight:600">📌 보유중</span>`
+        : (r.is_correct === true ? '✅' : r.is_correct === false ? '❌' : '-');
       return `<tr>
-        <td style="font-size:0.7rem;color:#8b949e">${fmtDate(r.exited_at)}</td>
+        <td style="font-size:0.7rem;color:#8b949e">${fmtDate(r.entered_at)}</td>
         <td><b>${r.company||r.ticker}</b><br><span style="color:#8b949e;font-size:0.65rem">${r.ticker}</span></td>
         <td><span class="badge badge-${tier}" style="font-size:0.62rem">${tl[tier]||tier}</span></td>
         <td>${r.qty}주</td>
         <td style="font-size:0.72rem">${fmt(r.entry_price)}</td>
-        <td style="font-size:0.72rem">${fmt(r.exit_price)}</td>
+        <td style="font-size:0.72rem">${exitPrice}</td>
         <td class="${cls}">${fmtPct(r.pnl_pct)}</td>
         <td class="${cls}" style="font-size:0.72rem">${Math.round(r.pnl||0).toLocaleString()}원</td>
-        <td style="text-align:center;font-size:1rem">${res}</td>
+        <td style="text-align:center;font-size:0.85rem">${statusCell}</td>
       </tr>`;
     }).join('');
   } catch(e) { console.warn(e); }

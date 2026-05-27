@@ -15,6 +15,8 @@ def fetch() -> list[dict]:
         try:
             r = httpx.get(url, timeout=10, follow_redirects=True,
                           headers={"User-Agent": "Mozilla/5.0"})
+            if r.status_code != 200:
+                continue
             root = ET.fromstring(r.text)
             for item in root.findall(".//item")[:10]:
                 title = item.findtext("title", "")

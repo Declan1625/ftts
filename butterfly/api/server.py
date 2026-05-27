@@ -422,18 +422,22 @@ async def log_stream():
 
 
 @app.get("/trades")
-def trade_history(limit: int = 50):
+def trade_history(limit: int = 100):
     s = get_session()
     try:
-        rows = s.query(Trade).filter_by(status="closed").order_by(Trade.exited_at.desc()).limit(limit).all()
+        rows = (s.query(Trade)
+                .order_by(Trade.entered_at.desc())
+                .limit(limit).all())
         return [{
             "ticker": t.ticker,
             "company": t.company_name,
+            "status": t.status,
             "direction": t.direction,
             "risk_tier": t.risk_tier,
             "qty": t.quantity,
             "entry_price": t.price_at_entry,
             "exit_price": t.price_at_exit,
+            "current_price": t.current_price,
             "pnl": round(t.pnl or 0),
             "pnl_pct": round(t.pnl_pct or 0, 2),
             "is_correct": t.is_correct,
