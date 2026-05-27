@@ -3,8 +3,19 @@ from __future__ import annotations
 import logging
 import requests
 import urllib3
+import time
 from datetime import datetime, timedelta
 from butterfly import config
+
+_LAST_CALL: float = 0.0
+_MIN_INTERVAL: float = 0.07  # 초당 최대 ~14건 (KIS 제한 20건/초의 70%)
+
+def _rate_limit():
+    global _LAST_CALL
+    elapsed = time.time() - _LAST_CALL
+    if elapsed < _MIN_INTERVAL:
+        time.sleep(_MIN_INTERVAL - elapsed)
+    _LAST_CALL = time.time()
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -58,6 +69,20 @@ class KISPaperClient:
             "Content-Type": "application/json",
         }
 
+    def _hashkey(self, body: dict) -> str:
+        """POST 요청 바디 무결성 검증용 HashKey 발급"""
+        try:
+            r = _SESSION.post(f"{BASE}/uapi/hashkey",
+                headers={
+                    "appkey": self.app_key,
+                    "appsecret": self.app_secret,
+                    "Content-Type": "application/json",
+                }, json=body, timeout=5)
+            return r.json().get("HASH", "")
+        except Exception as e:
+            logger.warning("HashKey 발급 실패: %s", e)
+            return ""
+
     def get_balance(self) -> dict:
         """모의투자 잔고 조회 - 계좌 유효성 확인용"""
         cano, prdt = self.account_no.split("-")
@@ -81,6 +106,7 @@ class KISPaperClient:
         return data
 
     def get_price(self, ticker: str) -> float:
+        _rate_limit()
         r = _SESSION.get(f"{BASE}/uapi/domestic-stock/v1/quotations/inquire-price",
             headers=self._headers("FHKST01010100"),
             params={"fid_cond_mrkt_div_code": "J", "fid_input_iscd": ticker},
@@ -103,8 +129,11 @@ class KISPaperClient:
             "ORD_UNPR": str(price),
         }
         logger.info(f"KIS 주문 요청: CANO={cano} PRDT={prdt} {ticker} {qty}주 @{price}")
+        _rate_limit()
+        headers = self._headers("VTTC0802U")
+        headers["hashkey"] = self._hashkey(body)
         r = _SESSION.post(f"{BASE}/uapi/domestic-stock/v1/trading/order-cash",
-            headers=self._headers("VTTC0802U"),
+            headers=headers,
             json=body, timeout=10)
         data = r.json()
         logger.info(f"KIS 주문 응답: {data}")
