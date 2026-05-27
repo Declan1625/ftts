@@ -1,6 +1,7 @@
 from __future__ import annotations
 from contextlib import asynccontextmanager
 from collections import deque
+from datetime import datetime, timezone, timedelta
 from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, StreamingResponse
@@ -94,12 +95,95 @@ async def notify_discord(session):
         logger.error("Discord 전송 실패: %s", e)
 
 
+async def morning_briefing():
+    """매일 오전 8시 KST 일간 브리핑 → Discord"""
+    if not config.DISCORD_WEBHOOK or not config.DISCORD_WEBHOOK.startswith("http"):
+        return
+    s = get_session()
+    try:
+        kst = timezone(timedelta(hours=9))
+        now = datetime.now(kst)
+        yesterday = now - timedelta(days=1)
+
+        # 전날 신호
+        yesterday_signals = (
+            s.query(Signal)
+            .filter(Signal.created_at >= yesterday.replace(hour=0, minute=0, second=0))
+            .order_by(Signal.created_at.desc())
+            .limit(10).all()
+        )
+        # 전날 거래
+        yesterday_trades = (
+            s.query(Trade)
+            .filter(Trade.entered_at >= yesterday.replace(hour=0, minute=0, second=0))
+            .all()
+        )
+        closed_today = s.query(Trade).filter_by(status="closed").filter(
+            Trade.exited_at >= yesterday.replace(hour=0, minute=0, second=0)
+        ).all()
+
+        # 포트폴리오
+        p = s.query(Portfolio).first()
+        open_cnt = s.query(func.count(Trade.id)).filter_by(status="open").scalar()
+        patterns_cnt = s.query(func.count(CausalPattern.id)).filter(
+            CausalPattern.occurrence_count >= 2
+        ).scalar()
+
+        # 손익 계산
+        cash = p.cash if p else config.PAPER_INITIAL_CASH
+        initial = p.initial_cash if p else config.PAPER_INITIAL_CASH
+        pnl_pct = (cash - initial) / initial * 100 if initial else 0
+        realized = p.realized_pnl if p else 0
+
+        lines = [
+            f"🌅 **FTTS 일간 브리핑 — {now.strftime('%m/%d %H:%M')} KST**",
+            "",
+            f"💼 **포트폴리오**: 현금 {cash:,.0f}원 | 수익률 {pnl_pct:+.2f}% | 실현손익 {realized:+,.0f}원",
+            f"📊 **포지션**: 오픈 {open_cnt}건 | 누적 패턴 {patterns_cnt}개",
+            "",
+        ]
+
+        if yesterday_signals:
+            lines.append(f"📡 **어제 신호 ({len(yesterday_signals)}건)**")
+            for sig in yesterday_signals[:5]:
+                icon = "🟢" if sig.direction == "BUY" else "🔴"
+                lines.append(f"  {icon} {sig.company_name or sig.ticker}({sig.ticker}) {sig.direction} {sig.confidence*100:.0f}%")
+        else:
+            lines.append("📡 어제 신호: 없음")
+
+        if closed_today:
+            wins = sum(1 for t in closed_today if t.pnl and t.pnl > 0)
+            lines.append(f"\n🏁 **어제 청산**: {len(closed_today)}건 | 승률 {wins/len(closed_today)*100:.0f}%")
+
+        lines += [
+            "",
+            "⚡ 30분 파이프라인 가동 중 | 장 시작(09:00) 자동 매수 대기",
+        ]
+
+        async with httpx.AsyncClient() as client:
+            await client.post(config.DISCORD_WEBHOOK,
+                              json={"content": "\n".join(lines)}, timeout=5)
+        logger.info("📨 일간 브리핑 Discord 전송 완료")
+    except Exception as e:
+        logger.error("일간 브리핑 실패: %s", e)
+    finally:
+        s.close()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
     scheduler.add_job(run_pipeline, "interval", minutes=30, id="pipeline")
+    # 매일 오전 8시 KST 일간 브리핑
+    scheduler.add_job(
+        morning_briefing, "cron",
+        hour=8, minute=0,
+        timezone="Asia/Seoul",
+        day_of_week="mon-fri",
+        id="morning_briefing",
+    )
     scheduler.start()
-    logger.info("나비효과 AI 시작 - 30분 스케줄 활성화")
+    logger.info("나비효과 AI 시작 - 30분 파이프라인 + 08:00 KST 일간 브리핑 활성화")
     yield
     scheduler.shutdown()
 
@@ -248,6 +332,13 @@ def metrics():
 async def run_now(background_tasks: BackgroundTasks):
     background_tasks.add_task(run_pipeline)
     return {"status": "started"}
+
+
+@app.get("/briefing")
+async def run_briefing(background_tasks: BackgroundTasks):
+    """수동 일간 브리핑 트리거 (테스트/긴급용)"""
+    background_tasks.add_task(morning_briefing)
+    return {"status": "briefing_started"}
 
 
 @app.get("/logs/stream")

@@ -23,6 +23,8 @@ _MIGRATIONS = [
     "ALTER TABLE trades ADD COLUMN status TEXT DEFAULT 'open'",
     "ALTER TABLE trades ADD COLUMN risk_tier TEXT DEFAULT 'MEDIUM'",
     "ALTER TABLE signals ADD COLUMN risk_tier TEXT DEFAULT 'MEDIUM'",
+    # v2: 피드백 루프 + 패턴 연결
+    "ALTER TABLE signals ADD COLUMN pattern_id INTEGER REFERENCES causal_patterns(id)",
 ]
 
 
