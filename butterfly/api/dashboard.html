@@ -8,7 +8,10 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: #0d1117; color: #e6edf3; font-family: -apple-system, sans-serif; }
 .header { padding: 14px 16px 0; }
-.header h1 { font-size: 1.25rem; margin-bottom: 12px; }
+.header h1 { font-size: 1.25rem; }
+.header-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.btn-wake { background:none; border:1px solid #30363d; color:#8b949e; font-size:0.72rem; padding:5px 12px; border-radius:6px; cursor:pointer; }
+.btn-wake:hover { border-color:#58a6ff; color:#58a6ff; }
 .tab-nav { display: flex; gap: 4px; border-bottom: 1px solid #21262d; padding: 0 16px; overflow-x: auto; }
 .tab-nav button { background: none; border: none; color: #8b949e; font-size: 0.85rem; padding: 8px 14px; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: color .15s; }
 .tab-nav button.active { color: #e6edf3; border-bottom-color: #58a6ff; }
@@ -98,7 +101,12 @@ body { background: #0d1117; color: #e6edf3; font-family: -apple-system, sans-ser
 </head>
 <body>
 
-<div class="header"><h1>🦋 나비효과 AI</h1></div>
+<div class="header">
+  <div class="header-row">
+    <h1>🦋 나비효과 AI</h1>
+    <button class="btn-wake" onclick="wakeBriefing()" title="서버 깨우기 + Discord 브리핑 전송">🌅 브리핑</button>
+  </div>
+</div>
 <nav class="tab-nav">
   <button class="active" onclick="switchTab('butterfly',this)">🦋 나비효과</button>
   <button onclick="switchTab('portfolio',this)">💼 포트폴리오</button>
@@ -238,13 +246,16 @@ class ButterflyGraph {
   }
 
   load(chains) {
-    this.nodes.clear();
-    this.edges = [];
+    /* 노드 누적: clear 하지 않고 새 노드만 추가 */
     document.getElementById('bf-loading').style.display = 'none';
+
+    const ETYPE = {
+      '통화정책':'💵 통화정책','무역':'🤝 무역','지정학':'⚔️ 지정학',
+      '기업실적':'📊 기업실적','원자재':'🛢 원자재','자연재해':'🌪 자연재해',
+    };
 
     const add = (id, data) => {
       if (!this.nodes.has(id)) {
-        /* 초기 위치: 원형 배치 후 중심으로 튀어들어오게 */
         const angle = Math.random() * Math.PI * 2;
         const dist  = Math.min(this.W, this.H) * 0.48;
         const x = this.W/2 + Math.cos(angle) * dist;
@@ -260,13 +271,17 @@ class ButterflyGraph {
 
     chains.forEach(chain => {
       const evId = `ev-${chain.id}`;
+      const cd = chain.chain || {};
+      /* 이벤트 노드: event_type(대분류) 우선, 없으면 source */
+      const rawType = cd.event_type || '';
+      const evLabel = ETYPE[rawType] || (chain.event_source||'이벤트').toUpperCase();
+      const evSub   = cd.summary ? cd.summary.slice(0,24) : (chain.event||'').slice(0,24);
       add(evId, {
-        type:'event', label: (chain.event||'').slice(0,22),
-        sub: chain.event_source || '',
+        type:'event', label: evLabel,
+        sub: evSub,
         r:18, color:'#388bfd', glow:'#1a6fff',
       });
 
-      const cd = chain.chain || {};
       const sectors = _parseSectors(cd);
       const signals = _parseSignals(cd);
 
@@ -638,6 +653,19 @@ async function runPipeline() {
   document.getElementById('status').textContent = '파이프라인 시작됨...';
   try { await fetch(BASE+'/run'); } catch(e) {}
   setTimeout(() => { btn.disabled=false; btn.textContent='▶ 파이프라인 실행'; }, 5000);
+}
+
+async function wakeBriefing() {
+  const btn = event.target;
+  const orig = btn.textContent;
+  btn.textContent = '⏳...'; btn.disabled = true;
+  try {
+    await fetch(BASE+'/briefing');
+    btn.textContent = '✅ 전송됨';
+    setTimeout(() => { btn.textContent=orig; btn.disabled=false; }, 3000);
+  } catch(e) {
+    btn.textContent = '❌'; btn.disabled=false;
+  }
 }
 
 /* ══ SSE ══ */
