@@ -23,6 +23,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 scheduler = AsyncIOScheduler()
+_pipeline_lock = asyncio.Lock()
 
 _log_buffer: deque[str] = deque(maxlen=100)
 _log_listeners: list[asyncio.Queue] = []
@@ -61,7 +62,11 @@ async def monitor_positions():
 
 
 async def run_pipeline():
-    logger.info("🦋 파이프라인 시작")
+    if _pipeline_lock.locked():
+        logger.warning("⚠️ 파이프라인 이미 실행 중 — 중복 스킵")
+        return
+    async with _pipeline_lock:
+        logger.info("🦋 파이프라인 시작")
     s = get_session()
     try:
         logger.info("📡 이벤트 수집 중...")
