@@ -187,7 +187,8 @@ def run_simulation(session: Session) -> int:
             sig.executed = True
             continue
 
-        qty = int(position_budget / price)
+        # 학습 모드: 방향성 검증이 목적 → 1주만 매수
+        qty = 1 if config.LEARNING_MODE else int(position_budget / price)
         if qty < 1:
             sig.executed = True
             continue

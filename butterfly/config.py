@@ -14,6 +14,7 @@ KIS_ACCOUNT: str = os.getenv("KIS_ACCOUNT_NO_KR", "")
 
 # Trading
 PAPER_INITIAL_CASH: float = float(os.getenv("PAPER_INITIAL_CASH", "10000000"))
+LEARNING_MODE: bool = os.getenv("LEARNING_MODE", "true").lower() == "true"
 BUY_CONFIDENCE_MIN: float = float(os.getenv("BUY_CONFIDENCE_MIN", "0.65"))
 POSITION_SIZE_RATIO: float = float(os.getenv("POSITION_SIZE_RATIO", "0.1"))  # 포지션당 자산의 10%
 
