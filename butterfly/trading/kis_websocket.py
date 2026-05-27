@@ -68,10 +68,16 @@ def _parse_execution(data: str) -> dict | None:
 async def listen(stop_event: asyncio.Event | None = None):
     """체결 통보 WebSocket 수신 루프"""
     try:
+        import ssl as _ssl
         import websockets
     except ImportError:
         logger.warning("websockets 패키지 없음 — pip install websockets")
         return
+
+    # wss:// 이지만 자체서명 인증서 → 검증만 비활성화
+    ssl_ctx = _ssl.create_default_context()
+    ssl_ctx.check_hostname = False
+    ssl_ctx.verify_mode = _ssl.CERT_NONE
 
     approval_key = await _get_approval_key()
     if not approval_key:
@@ -95,7 +101,7 @@ async def listen(stop_event: asyncio.Event | None = None):
     while True:
         try:
             logger.info("KIS WebSocket 연결 시도...")
-            async with websockets.connect(WS_URL, ssl=False) as ws:
+            async with websockets.connect(WS_URL, ssl=ssl_ctx) as ws:
                 await ws.send(subscribe_msg)
                 logger.info("✅ KIS WebSocket 체결 통보 구독 완료")
                 reconnect_delay = 5
