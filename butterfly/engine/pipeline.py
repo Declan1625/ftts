@@ -8,7 +8,9 @@ from butterfly.engine import analyzer as _analyzer
 from butterfly.engine.pattern_engine import find_pattern, save_pattern, pattern_to_result
 from butterfly.engine.event_scorer import score_event, quick_sectors
 from butterfly.engine import industry_analyzer as _industry
+from butterfly.engine import timing_filter as _timing
 from butterfly.sources.dart_financial import enrich_signals
+from butterfly.sources.krx_supply import adjust_confidence
 from butterfly.config import BUY_CONFIDENCE_MIN
 
 logger = logging.getLogger(__name__)
@@ -105,15 +107,27 @@ def process_pending(session: Session, max_per_cycle: int = 30) -> int:
                 session.commit()
                 continue
 
-            # ── 3-1. DART 재무데이터 보강 ────────────────────────────
+            # ── 3-1. 타이밍 필터 (오래된 뉴스 감쇠) ─────────────────
+            signals = _timing.apply(signals, event.published_at)
+            if not signals:
+                event.processed = True
+                session.commit()
+                continue
+
+            # ── 3-2. DART 재무데이터 보강 ────────────────────────────
             signals = enrich_signals(signals)
 
-            # ── 3-2. 산업/기업 분석 레이어 (밸류체인 + 재무 필터) ────
+            # ── 3-3. 산업/기업 분석 레이어 (밸류체인 + 재무 필터) ────
             sector_names = [
                 s["name"] if isinstance(s, dict) else s
                 for s in sectors
             ]
             signals = _industry.analyze(event.title, sector_names, signals)
+
+            # ── 3-4. KRX 수급 보정 ───────────────────────────────────
+            for s in signals:
+                if s.get("ticker"):
+                    s["confidence"] = adjust_confidence(s["ticker"], s.get("confidence", 0.5))
 
             tier = _classify_tier(sectors)
 

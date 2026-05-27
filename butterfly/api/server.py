@@ -480,6 +480,24 @@ def chains_list(limit: int = 20):
         s.close()
 
 
+@app.get("/backtest/historical")
+async def backtest_historical(hold_days: int = 10):
+    """역사적 케이스 12건 백테스트 (yfinance, 수십초 소요)"""
+    from butterfly.backtest.runner import run as bt_run
+    return await asyncio.to_thread(bt_run, hold_days)
+
+
+@app.get("/backtest/trades")
+async def backtest_trades(hold_days: int = 10):
+    """DB 실제 청산 거래 백테스트"""
+    from butterfly.backtest.runner import run_from_db
+    s = get_session()
+    try:
+        return await asyncio.to_thread(run_from_db, s, hold_days)
+    finally:
+        s.close()
+
+
 @app.get("/chains/{chain_id}")
 def chain_detail(chain_id: int):
     import json
