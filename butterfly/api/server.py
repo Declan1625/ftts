@@ -240,8 +240,12 @@ def stats():
     try:
         closed = s.query(Trade).filter_by(status="closed").all()
         total_closed = len(closed)
+        MIN_TRADES = 10  # 최소 표본 수
         correct = sum(1 for t in closed if t.is_correct)
-        accuracy = round(correct / total_closed * 100, 1) if total_closed else None
+        # 10건 미만은 신뢰도 표시 안 함
+        accuracy = round(correct / total_closed * 100, 1) if total_closed >= MIN_TRADES else None
+        wins  = [t.pnl_pct for t in closed if t.is_correct and t.pnl_pct]
+        loses = [t.pnl_pct for t in closed if not t.is_correct and t.pnl_pct]
         return {
             "events": s.query(func.count(Event.id)).scalar(),
             "chains": s.query(func.count(ButterflyChain.id)).scalar(),
@@ -250,7 +254,10 @@ def stats():
             "pending_events": s.query(func.count(Event.id)).filter_by(processed=False).scalar(),
             "patterns": s.query(func.count(CausalPattern.id)).scalar(),
             "closed_trades": total_closed,
-            "accuracy_pct": accuracy,          # null = 청산 거래 없음
+            "min_trades_required": MIN_TRADES,
+            "accuracy_pct": accuracy,           # null = 표본 부족
+            "avg_win_pct": round(sum(wins)/len(wins), 2) if wins else None,
+            "avg_lose_pct": round(sum(loses)/len(loses), 2) if loses else None,
             "live_ready": accuracy is not None and accuracy >= 80.0,
         }
     finally:

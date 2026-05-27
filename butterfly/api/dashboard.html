@@ -147,6 +147,9 @@ body { background: #0d1117; color: #e6edf3; font-family: -apple-system, sans-ser
     <div class="card"><div class="label">총 청산</div><div class="value sm" id="acc-total">-</div></div>
     <div class="card"><div class="label">수익 청산</div><div class="value sm pos" id="acc-win">-</div></div>
     <div class="card"><div class="label">손실 청산</div><div class="value sm neg" id="acc-lose">-</div></div>
+    <div class="card"><div class="label">평균 수익률</div><div class="value sm pos" id="acc-avg-win">-</div></div>
+    <div class="card"><div class="label">평균 손실률</div><div class="value sm neg" id="acc-avg-lose">-</div></div>
+    <div class="card"><div class="label">필요 표본</div><div class="value sm" id="acc-min">10건</div></div>
   </div>
   <div class="sec-title">패턴별 정확도</div>
   <div id="pattern-list"></div>
@@ -287,10 +290,13 @@ async function loadAccuracy() {
     if (acc == null) {
       document.getElementById('acc-num').textContent = '-';
       document.getElementById('acc-fill').style.width = '0%';
-      document.getElementById('acc-badge').textContent = '데이터 수집 중';
+      const need = d.min_trades_required || 10;
+      document.getElementById('acc-badge').textContent = `표본 부족 (${total}/${need}건)`;
       document.getElementById('acc-badge').className = 'live-badge live-no';
       document.getElementById('acc-win').textContent = '-';
       document.getElementById('acc-lose').textContent = '-';
+      document.getElementById('acc-avg-win').textContent = '-';
+      document.getElementById('acc-avg-lose').textContent = '-';
     } else {
       document.getElementById('acc-num').textContent = acc.toFixed(1) + '%';
       document.getElementById('acc-num').className = 'acc-num ' + (acc >= 80 ? 'pos' : acc >= 60 ? '' : 'neg');
@@ -298,6 +304,8 @@ async function loadAccuracy() {
       const win = Math.round(total * acc / 100);
       document.getElementById('acc-win').textContent = win + '건';
       document.getElementById('acc-lose').textContent = (total - win) + '건';
+      document.getElementById('acc-avg-win').textContent  = d.avg_win_pct  != null ? '+'+d.avg_win_pct.toFixed(2)+'%' : '-';
+      document.getElementById('acc-avg-lose').textContent = d.avg_lose_pct != null ? d.avg_lose_pct.toFixed(2)+'%' : '-';
       if (d.live_ready) {
         document.getElementById('acc-badge').textContent = '🚀 실전 준비 완료';
         document.getElementById('acc-badge').className = 'live-badge live-yes';

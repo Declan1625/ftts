@@ -16,6 +16,9 @@ logger = logging.getLogger(__name__)
 
 KST = timezone(timedelta(hours=9))
 
+# 수익으로 인정할 최소 수익률 (거래비용 0.5% 이상이어야 실질 수익)
+WIN_THRESHOLD_PCT = config.ROUND_TRIP_COST * 100  # ~0.5%
+
 # 티어별 설정
 TIER = {
     "HIGH":   {"position_pct": 0.08, "target": 0.08, "stop": 0.05, "alloc": 0.30},
@@ -112,7 +115,7 @@ def run_simulation(session: Session) -> int:
             entered = t.entered_at.replace(tzinfo=None) if t.entered_at.tzinfo else t.entered_at
             days_held = (datetime.now(timezone.utc).replace(tzinfo=None) - entered).days
             if days_held >= config.MAX_HOLDING_DAYS:
-                _close(t, price, t.pnl >= 0, portfolio, session)
+                _close(t, price, t.pnl_pct > WIN_THRESHOLD_PCT, portfolio, session)
                 logger.info("⏰ 기간초과 청산: %s (%d일) %.1f%%", t.ticker, days_held, t.pnl_pct)
                 continue
 
@@ -136,7 +139,7 @@ def run_simulation(session: Session) -> int:
                 price = _price(kis, open_trade.ticker)
                 if price:
                     open_trade.pnl = (price - open_trade.price_at_entry) * open_trade.quantity
-                    _close(open_trade, price, open_trade.pnl >= 0, portfolio, session)
+                    _close(open_trade, price, open_trade.pnl_pct > WIN_THRESHOLD_PCT, portfolio, session)
                     logger.info("📉 SELL신호 청산: %s @%.0f원", open_trade.ticker, price)
             sig.executed = True
             continue
