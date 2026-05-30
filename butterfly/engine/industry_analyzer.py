@@ -92,6 +92,9 @@ def analyze(event: str, sectors: list[str], signals: list[dict]) -> list[dict]:
     signals: enrich_signals()로 재무데이터가 추가된 신호 목록
     반환: adjusted_confidence가 갱신된 신호 목록
     """
+    import butterfly.config as _cfg
+    if not _cfg.CLAUDE_ENABLED:
+        return signals  # Claude 차단 시 원본 반환
     if not signals:
         return signals
 

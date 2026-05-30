@@ -231,6 +231,10 @@ def _prepare_input(title: str, body: str) -> str:
 
 
 def analyze(title: str, body: str) -> dict | None:
+    from butterfly.config import CLAUDE_ENABLED
+    if not CLAUDE_ENABLED:
+        logger.info("🔇 CLAUDE_ENABLED=false — Claude 호출 차단")
+        return None
     text = _prepare_input(title, body)
     for attempt in range(3):
         try:
@@ -277,6 +281,10 @@ def analyze(title: str, body: str) -> dict | None:
 
 def analyze_batch(events_data: list[tuple[str, str]]) -> list[dict | None]:
     """여러 이벤트를 Batch API로 한 번에 분석 — 50% 비용 절감"""
+    from butterfly.config import CLAUDE_ENABLED
+    if not CLAUDE_ENABLED:
+        logger.info("🔇 CLAUDE_ENABLED=false — Batch API 차단 (%d건 스킵)", len(events_data))
+        return [None] * len(events_data)
     if not events_data:
         return []
     import time
