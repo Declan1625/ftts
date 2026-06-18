@@ -65,6 +65,8 @@ for _lg_name in ("butterfly", "httpx"):
 
 async def monitor_positions():
     """5분마다 오픈 포지션 가격 체크 → 목표가/손절 즉시 청산 (Claude 미사용)"""
+    if config.PAUSED:
+        return
     if not _is_market_hours():
         return  # 장외 시간 — KIS 가격 조회 불필요
     s = get_session()
@@ -79,6 +81,8 @@ async def monitor_positions():
 
 
 async def run_pipeline():
+    if config.PAUSED:
+        return
     if not _is_market_hours():
         logger.info("💤 장외 시간 — 파이프라인 스킵 (8시 브리핑에서 일괄 처리)")
         return
@@ -137,6 +141,8 @@ async def notify_discord(session):
 
 async def morning_briefing():
     """매일 오전 8시 KST: 밤새 뉴스 수집+분석 → Discord 브리핑"""
+    if config.PAUSED:
+        return
     # ── 밤새 이벤트 일괄 수집 & 분석 (장 시작 전 준비) ──────────────
     s0 = get_session()
     try:

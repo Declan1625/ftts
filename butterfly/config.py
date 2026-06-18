@@ -29,3 +29,6 @@ MAX_POSITIONS: int = int(os.getenv("MAX_POSITIONS", "30"))  # 학습모드 동�
 
 # 크레딧 절약: false 설정 시 Claude API 호출 완전 차단
 CLAUDE_ENABLED: bool = os.getenv("CLAUDE_ENABLED", "true").lower() == "true"
+
+# 잠정 중단: true 설정 시 파이프라인/모니터/Discord 알림 전부 정지
+PAUSED: bool = os.getenv("PAUSED", "false").lower() == "true"
